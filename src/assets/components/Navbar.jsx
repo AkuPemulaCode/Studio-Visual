@@ -212,7 +212,7 @@ export default function Navbar() {
 
             <li>
               <NavLink to="/booking" onClick={closeMenus} className={navLinkClass}>
-                Jadwal
+                Booking
               </NavLink>
             </li>
 
