@@ -1,0 +1,53 @@
+@startuml Activity-Worker-Inheartz
+' Activity Diagram - Worker Produksi
+' Alur: login -> notifikasi -> dashboard produksi -> kanban -> status booking
+'       -> pelanggan, dengan notifikasi web + WhatsApp ke client (v0.1.8)
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam defaultTextAlignment left
+
+|Worker (Produksi)|
+start
+:Masuk /masuk;
+|Backend (Laravel API)|
+:Autentikasi Sanctum (role = production);
+|Sistem (React SPA)|
+:Redirect /worker;
+|Worker (Produksi)|
+:Buka dashboard produksi;
+:Terima notifikasi pesanan baru (bell/toast + WhatsApp);
+|Fonnte (WhatsApp)|
+:Kirim pesan pesanan baru ke admin & staff produksi;
+
+|Worker (Produksi)|
+if (Kelola produksi?) then (ya)
+  :/worker (kanban);
+  :Lihat kartu pesanan per tahap;
+  :Pindahkan tahap\nqueued → transfer → culling → editing → review → revision → delivered;
+  :Unggah preview hasil & estimasi selesai;
+  |Backend (Laravel API)|
+  :Simpan booking_progress & hitung persentase;
+  :Kirim notifikasi progres ke client (web + WhatsApp);
+  |Worker (Produksi)|
+else (tidak)
+endif
+
+if (Kelola status booking?) then (ya)
+  :/worker/bookings;
+  :Ubah status booking;
+  |Backend (Laravel API)|
+  :Simpan perubahan & catat log;
+  :Kirim notifikasi perubahan status ke client (web + WhatsApp);
+  |Worker (Produksi)|
+else (tidak)
+endif
+
+if (Lihat pelanggan?) then (ya)
+  :/worker/customers;
+  :Lihat data pelanggan;
+else (tidak)
+endif
+stop
+@enduml

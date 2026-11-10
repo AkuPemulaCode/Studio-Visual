@@ -1,0 +1,220 @@
+@startuml Class-Inheartz-Studio
+' Class Diagram (model domain) - Inheartz Studio
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide circle
+
+class User {
+  +id : bigint <<PK>>
+  +name : string
+  +email : string <<unique>>
+  +phone : string
+  +role : "admin" | "production" | "client"
+  --
+  +isAdmin() : bool
+  +isProduction() : bool
+  +isStaff() : bool   ' admin ATAU production
+}
+
+class Category {
+  +id : bigint <<PK>>
+  +name : string
+  +slug : string <<unique>>
+  +description : text
+  +image : string
+  +is_active : bool
+}
+
+class Package {
+  +id : bigint <<PK>>
+  +category_id : bigint <<FK>>
+  +name : string
+  +slug : string <<unique>>
+  +price : decimal
+  +duration : string
+  +photo_count : string
+  +unit : string
+  +features : json
+  +is_popular : bool   ' dipertahankan untuk kompatibilitas; tidak dipakai UI
+  +is_active : bool
+}
+
+class Portfolio {
+  +id : bigint <<PK>>
+  +category_id : bigint <<FK>>
+  +package_id : bigint <<FK nullable>>
+  +title : string
+  +slug : string <<unique>>
+  +image : string
+  +description : text
+  +shoot_date : date
+  +is_published : bool
+}
+
+class Availability {
+  +id : bigint <<PK>>
+  +date : date
+  +time : time
+  +quota : int
+  +booked : int
+  +is_open : bool
+}
+
+class Booking {
+  +id : bigint <<PK>>
+  +booking_code : string
+  +user_id : bigint <<FK nullable>>
+  +package_id : bigint <<FK nullable>>
+  +availability_id : bigint <<FK nullable>>
+  +assigned_to : bigint <<FK nullable>>
+  +customer_name : string
+  +customer_email : string
+  +customer_phone : string
+  +location : string
+  +notes : text
+  +booking_date : date
+  +booking_time : time
+  +status : "pending"|"awaiting_payment"|"paid"|"confirmed"|"ongoing"|"completed"|"cancelled"
+  +production_stage : "queued"|"transfer"|"culling"|"editing"|"review"|"revision"|"delivered"
+  +production_percent : tinyint
+  +estimated_finish : date nullable
+  +production_started_at : timestamp nullable
+  +production_finished_at : timestamp nullable
+  +review_status : "pending"|"approved"|"revision"
+  +revision_count : tinyint
+  +total_price : decimal
+  +admin_note : text
+  +drive_url : string
+  +preview_url : string
+  +completed_at : timestamp nullable
+  +cancelled_at : timestamp nullable
+  +created_at : timestamp
+  +updated_at : timestamp
+}
+
+class BookingProgress {
+  +id : bigint <<PK>>
+  +booking_id : bigint <<FK>>
+  +user_id : bigint <<FK nullable>>
+  +stage : string
+  +status : "in_progress" | "done" | "skipped"
+  +note : text
+}
+
+class PaymentMethod {
+  +id : bigint <<PK>>
+  +name : string
+  +code : string <<unique>>
+  +group : "bank" | "va" | "ewallet" | "qris"
+  +account_number : string
+  +account_name : string
+  +instructions : text
+  +is_active : bool
+}
+
+class Payment {
+  +id : bigint <<PK>>
+  +booking_id : bigint <<FK>>
+  +payment_method_id : bigint <<FK nullable>>
+  +amount : decimal
+  +type : "dp" | "full"
+  +provider : string
+  +midtrans_order_id : string
+  +snap_token : string
+  +snap_url : text
+  +transaction_status : string
+  +fraud_status : string
+  +payload : json
+  +proof_path : string
+  +status : "pending"|"verified"|"rejected"|"refunded"
+  +paid_at : timestamp
+  +verified_by : bigint <<FK nullable>>
+}
+
+class CashTransaction {
+  +id : bigint <<PK>>
+  +booking_id : bigint <<FK nullable>>
+  +type : "income" | "expense"
+  +amount : decimal
+  +description : string
+  +occurred_at : timestamp
+  --
+  +recordForBooking()
+  +reverseForBooking()
+}
+
+class RegistrationOtp {
+  +id : bigint <<PK>>
+  +email : string
+  +phone : string
+  +otp_hash : string
+  +attempts : tinyint
+  +expires_at : timestamp
+  +used_at : timestamp
+  --
+  +isExpired() : bool
+  +isUsed() : bool
+}
+
+class PasswordResetOtp {
+  +id : bigint <<PK>>
+  +email : string
+  +phone : string
+  +otp_hash : string
+  +attempts : tinyint
+  +expires_at : timestamp
+  +used_at : timestamp
+  --
+  +isExpired() : bool
+  +isUsed() : bool
+}
+
+class ContactMessage {
+  +id : bigint <<PK>>
+  +name : string
+  +email : string
+  +subject : string
+  +message : text
+  +is_read : bool
+}
+
+class Notification {
+  +id : uuid <<PK>>
+  +type : string
+  +notifiable_type : string
+  +notifiable_id : bigint
+  +data : json   ' title, message, url, booking_id
+  +read_at : timestamp nullable
+}
+
+class ActivityLog {
+  +id : bigint <<PK>>
+  +user_id : bigint <<FK nullable>>
+  +action : string
+  +description : text
+  +meta : json
+  +ip_address : string
+}
+
+note for Package "is_popular dipertahankan untuk kompatibilitas backend, tetapi tidak lagi ditampilkan di UI (badge Populer dihapus)."
+note for Notification "Dipakai untuk notifikasi in-app (bell/toast/suara). WhatsApp dikirim melalui Fonnte untuk pesanan baru, perubahan status, progres produksi, dan rekomendasi paket."
+note "Rekomendasi paket dihitung dari riwayat booking/kategori/harga (GET /recommendations); tidak memiliki tabel khusus." as NRec
+
+User "1" -- "0..*" Booking : membuat
+User "1" -- "0..*" Booking : assigned to (worker)
+User "1" -- "0..*" Payment : memverifikasi
+User "1" -- "0..*" ActivityLog : menghasilkan
+User "1" -- "0..*" Notification : menerima
+Category "1" -- "0..*" Package
+Category "1" -- "0..*" Portfolio
+Package "1" -- "0..*" Portfolio
+Package "1" -- "0..*" Booking : dipesan
+Availability "1" -- "0..*" Booking
+Booking "1" -- "0..*" Payment : memiliki
+PaymentMethod "1" -- "0..*" Payment
+Booking "1" -- "0..*" CashTransaction
+Booking "1" -- "0..*" BookingProgress : riwayat tahapan
+User "1" -- "0..*" BookingProgress : memperbarui
+@enduml

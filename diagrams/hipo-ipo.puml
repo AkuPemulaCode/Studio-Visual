@@ -1,0 +1,94 @@
+@startuml HIPO-IPO-Inheartz
+' HIPO - Input / Process / Output (IPO) Chart - Inheartz Studio
+' Setiap modul dipisahkan: INPUT -> PROCESS -> OUTPUT.
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment left
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor #333333
+}
+title HIPO - Input / Process / Output (IPO)\nInheartz Studio v0.1.8
+
+package "1. Modul Publik" {
+  rectangle "INPUT\n- Konten paket, kategori, portofolio, FAQ\n- Tanggal pencarian jadwal" as I1
+  rectangle "PROCESS\n- Render katalog & hero\n- Filter kategori / tanggal\n- Cek ketersediaan slot" as P1
+  rectangle "OUTPUT\n- Halaman publik\n- Daftar paket & galeri\n- Slot jadwal tersedia" as O1
+  I1 -right-> P1
+  P1 -right-> O1
+}
+
+package "2. Modul Akun & Autentikasi" {
+  rectangle "INPUT\n- Nama, email, password\n- Nomor WhatsApp\n- Kode OTP" as I2
+  rectangle "PROCESS\n- Validasi kredensial\n- Kirim / verifikasi OTP via Fonnte\n- Buat sesi token & cek role" as P2
+  rectangle "OUTPUT\n- Token Sanctum\n- Sesi login\n- Redirect sesuai peran\n- Akun client baru" as O2
+  I2 -right-> P2
+  P2 -right-> O2
+}
+
+package "3. Modul Booking" {
+  rectangle "INPUT\n- Paket, tanggal, jam\n- Data pemesan\n- Kuota slot" as I3
+  rectangle "PROCESS\n- Validasi kuota\n- Buat booking awaiting_payment\n- Kurangi kuota slot" as P3
+  rectangle "OUTPUT\n- Kode booking\n- Status awaiting_payment\n- Tagihan pembayaran\n- Notif pesanan baru (admin/staff)" as O3
+  I3 -right-> P3
+  P3 -right-> O3
+}
+
+package "4. Modul Pembayaran & Kas" {
+  rectangle "INPUT\n- Booking ID & nominal\n- Transaksi Midtrans\n- Webhook & signature\n- Status order" as I4
+  rectangle "PROCESS\n- Charge Midtrans Snap\n- Verifikasi signature SHA512\n- Sync / rekonsiliasi status\n- Idempoten & anti-regresi" as P4
+  rectangle "OUTPUT\n- Payment verified / rejected / refunded\n- Booking paid / cancelled\n- Kas income / expense\n- Notif pembayaran (web + WhatsApp)" as O4
+  I4 -right-> P4
+  P4 -right-> O4
+}
+
+package "5. Modul Produksi" {
+  rectangle "INPUT\n- Booking berstatus paid\n- Tahapan & catatan\n- Estimasi selesai\n- Preview URL" as I5
+  rectangle "PROCESS\n- Update stage / progress\n- Hitung persentase\n- Simpan riwayat booking_progress" as P5
+  rectangle "OUTPUT\n- Kanban ter-update\n- Riwayat progres\n- Notif progres ke client (web + WhatsApp)" as O5
+  I5 -right-> P5
+  P5 -right-> O5
+}
+
+package "6. Modul Pesanan & Review" {
+  rectangle "INPUT\n- User login & daftar booking\n- Preview hasil\n- Keputusan review\n- Catatan revisi" as I6
+  rectangle "PROCESS\n- Tampilkan progress\n- Setujui hasil / minta revisi\n- Hitung revision_count\n- Pindah stage revisi" as P6
+  rectangle "OUTPUT\n- review_status approved / revision\n- Notif ke admin/worker\n- Progress & hasil akhir" as O6
+  I6 -right-> P6
+  P6 -right-> O6
+}
+
+package "7. Modul Notifikasi & Rekomendasi" {
+  rectangle "INPUT\n- Event pesanan / status / progres\n- Riwayat booking, kategori, harga" as I7
+  rectangle "PROCESS\n- Buat notifikasi in-app\n- Kirim WhatsApp via Fonnte\n- Hitung rekomendasi paket" as P7
+  rectangle "OUTPUT\n- Bell / toast / suara\n- Pesan WhatsApp\n- Daftar rekomendasi di /pesanan" as O7
+  I7 -right-> P7
+  P7 -right-> O7
+}
+
+package "8. Modul Dashboard Admin" {
+  rectangle "INPUT\n- Data booking & pembayaran\n- Data user, paket, portofolio\n- Audit trail" as I8
+  rectangle "PROCESS\n- Agregasi statistik & saldo\n- Filter / cari\n- CRUD & verifikasi pembayaran\n- Catat audit log" as P8
+  rectangle "OUTPUT\n- Monitoring & grafik\n- Saldo / kas studio\n- Tabel kelola & audit log" as O8
+  I8 -right-> P8
+  P8 -right-> O8
+}
+
+package "9. Modul Dashboard Produksi" {
+  rectangle "INPUT\n- Antrean produksi\n- Data booking\n- Data pelanggan\n- Role production" as I9
+  rectangle "PROCESS\n- Drag & drop tahapan\n- Ubah status booking\n- Lihat data pelanggan" as P9
+  rectangle "OUTPUT\n- Progres ter-update\n- Status tersinkron ke admin\n- Notif perubahan ke client" as O9
+  I9 -right-> P9
+  P9 -right-> O9
+}
+
+package "10. Modul Infrastruktur & Ketahanan" {
+  rectangle "INPUT\n- Status online perangkat\n- Respons API / database\n- Event error" as I10
+  rectangle "PROCESS\n- Deteksi offline\n- Tangkap HTTP 5xx / koneksi gagal\n- Fallback mock & polling" as P10
+  rectangle "OUTPUT\n- Halaman /offline\n- Popup database\n- Empty state & data tersinkron" as O10
+  I10 -right-> P10
+  P10 -right-> O10
+}
+@enduml

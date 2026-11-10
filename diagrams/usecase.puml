@@ -1,0 +1,136 @@
+@startuml UseCase-Inheartz-Studio
+' Use Case Diagram - Inheartz Studio
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam shadowing false
+
+actor "Guest / Calon Pelanggan" as Guest
+actor "Pelanggan Terdaftar (Client)" as Client
+actor "Admin Studio" as Admin
+actor "Pekerja Produksi (Production)" as Worker
+
+actor "Midtrans Snap" as Midtrans <<system>>
+actor "WhatsApp (Fonnte)" as Fonnte <<system>>
+actor "Notifikasi In-App" as Notif <<system>>
+
+Guest <|-- Client
+
+rectangle "Inheartz Studio" {
+  ' ===== Situs publik & pelanggan =====
+  usecase "Lihat beranda & hero" as UC01
+  usecase "Lihat paket & FAQ" as UC02
+  usecase "Lihat portofolio\n(filter kategori/tanggal & detail karya)" as UC03
+  usecase "Lihat ketersediaan jadwal" as UC04
+  usecase "Buat booking 4 langkah" as UC05
+  usecase "Bayar via Midtrans Snap" as UC06
+  usecase "Lihat tagihan belum dibayar" as UC07
+  usecase "Batalkan pembayaran" as UC08
+  usecase "Cek status pembayaran" as UC09
+  usecase "Daftar akun" as UC10
+  usecase "Verifikasi OTP WhatsApp" as UC11
+  usecase "Login / Logout" as UC12
+  usecase "Reset password via OTP" as UC13
+  usecase "Lihat pesanan & progres produksi" as UC14
+  usecase "Setujui hasil / minta revisi" as UC15
+  usecase "Terima notifikasi in-app" as UC16
+
+  ' ===== Dashboard admin =====
+  usecase "Monitoring & statistik" as UC17
+  usecase "Kelola booking\n(status, catatan, link Drive, preview, hapus)" as UC18
+  usecase "Kelola papan produksi (kanban)" as UC19
+  usecase "Kelola paket layanan" as UC20
+  usecase "Kelola portofolio" as UC21
+  usecase "Kelola user & role" as UC22
+  usecase "Lihat saldo & kas studio" as UC23
+  usecase "Verifikasi / cek pembayaran Midtrans" as UC24
+  usecase "Lihat audit log" as UC25
+
+  ' ===== Dashboard produksi =====
+  usecase "Ubah tahapan produksi & preview" as UC26
+  usecase "Kelola status booking" as UC27
+  usecase "Lihat data pelanggan" as UC28
+
+  ' ===== Notifikasi & rekomendasi (v0.1.8) =====
+  usecase "Terima notifikasi pesanan\n(web + WhatsApp)" as UC29
+  usecase "Terima notifikasi pesanan baru\n(web + WhatsApp)" as UC30
+  usecase "Terima rekomendasi paket\n(web + WhatsApp)" as UC31
+}
+
+' ===== Guest / calon pelanggan =====
+Guest --> UC01
+Guest --> UC02
+Guest --> UC03
+Guest --> UC04
+Guest --> UC05
+Guest --> UC06
+Guest --> UC10
+Guest --> UC11
+Guest --> UC12
+Guest --> UC13
+
+' ===== Pelanggan terdaftar =====
+Client --> UC07
+Client --> UC08
+Client --> UC09
+Client --> UC12
+Client --> UC13
+Client --> UC14
+Client --> UC15
+Client --> UC16
+Client --> UC29
+Client --> UC31
+
+' ===== Admin =====
+Admin --> UC12
+Admin --> UC16
+Admin --> UC17
+Admin --> UC18
+Admin --> UC19
+Admin --> UC20
+Admin --> UC21
+Admin --> UC22
+Admin --> UC23
+Admin --> UC24
+Admin --> UC25
+Admin --> UC26
+Admin --> UC28
+Admin --> UC30
+
+' ===== Pekerja produksi =====
+Worker --> UC12
+Worker --> UC16
+Worker --> UC19
+Worker --> UC26
+Worker --> UC27
+Worker --> UC28
+Worker --> UC30
+
+' ===== Relasi include / extend =====
+UC05 ..> UC04 : <<include>>
+UC06 ..> UC07 : <<extend>>
+UC10 ..> UC11 : <<include>>
+UC13 ..> UC11 : <<include>>
+UC09 ..> UC14 : <<extend>>
+UC15 ..> UC14 : <<extend>>
+UC26 ..> UC19 : <<extend>>
+UC27 ..> UC18 : <<extend>>
+UC29 ..> UC14 : <<extend>>
+UC31 ..> UC14 : <<extend>>
+UC30 ..> UC18 : <<extend>>
+
+' ===== Sistem eksternal =====
+UC06 --> Midtrans
+UC09 --> Midtrans
+UC24 --> Midtrans
+UC11 --> Fonnte
+UC13 --> Fonnte
+UC29 --> Fonnte
+UC30 --> Fonnte
+UC31 --> Fonnte
+UC16 --> Notif
+UC29 --> Notif
+UC31 --> Notif
+@enduml

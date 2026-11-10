@@ -1,0 +1,164 @@
+@startuml Activity-Client-Inheartz
+' Activity Diagram - Guest / Client
+' Alur: jelajah publik -> autentikasi/OTP -> booking -> Midtrans -> pesanan/review
+'       -> notifikasi web + WhatsApp -> rekomendasi paket (v0.1.8)
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam defaultTextAlignment left
+
+|Guest / Client|
+start
+:Buka situs Inheartz Studio (/);
+:Jelajahi Home, Layanan, Portofolio/Kategori, Jadwal;
+if (Ingin memesan sesi?) then (tidak)
+  :Lihat pesanan & rekomendasi (jika sudah login);
+  stop
+else (ya)
+endif
+
+if (Sudah login?) then (tidak)
+  :Pilih Daftar / Masuk / Lupa Password;
+  if (Daftar?) then (ya)
+    :Isi data akun (nama, email, no. WhatsApp);
+    |Backend (Laravel API)|
+    :Buat & kirim OTP (6 digit, 10 menit);
+    |Fonnte (WhatsApp)|
+    :Kirim kode OTP;
+    |Guest / Client|
+    :Masukkan kode OTP;
+    |Backend (Laravel API)|
+    :Verifikasi OTP & buat akun (role = client);
+    :Login otomatis;
+  else (tidak)
+    if (Lupa password?) then (ya)
+      :Masukkan email terdaftar;
+      |Backend (Laravel API)|
+      :Kirim OTP via WhatsApp;
+      |Fonnte (WhatsApp)|
+      :Kirim kode OTP;
+      |Guest / Client|
+      :Verifikasi OTP & set password baru;
+      |Sistem (React SPA)|
+      :Arahkan ke /masuk;
+      |Guest / Client|
+      :Masukkan email & password;
+      |Backend (Laravel API)|
+      :Autentikasi Sanctum;
+    else (login)
+      |Guest / Client|
+      :Masukkan email & password;
+      |Backend (Laravel API)|
+      :Autentikasi Sanctum;
+    endif
+  endif
+else (ya)
+  |Sistem (React SPA)|
+  :Validasi token Sanctum;
+endif
+
+|Guest / Client|
+:Buka /booking;
+:Pilih paket;
+:Pilih tanggal & jam;
+|Sistem (React SPA)|
+:GET /availability;
+if (Slot tersedia?) then (tidak)
+  |Guest / Client|
+  :Tampilkan "slot penuh";
+  stop
+else (ya)
+endif
+|Guest / Client|
+:Isi data pemesan & konfirmasi;
+|Backend (Laravel API)|
+:Validasi kuota & buat booking (awaiting_payment);
+:Kurangi kuota slot;
+:Kirim notifikasi pesanan baru ke admin & staff produksi (web + WhatsApp);
+|Fonnte (WhatsApp)|
+:Kirim pesan pesanan baru;
+|Sistem (React SPA)|
+:Arahkan ke /pembayaran?booking=KODE;
+:Tampilkan rincian booking & total;
+|Guest / Client|
+if (Batalkan pembayaran?) then (ya)
+  |Backend (Laravel API)|
+  :booking.status = cancelled;
+  :Kembalikan kuota slot (booked - 1);
+  :Catat log pembatalan;
+  :Kirim notifikasi pembatalan ke client (web + WhatsApp);
+  |Sistem (React SPA)|
+  :Tampilkan "Pesanan Dibatalkan";
+  stop
+else (tidak)
+endif
+:Klik "Bayar Sekarang";
+|Sistem (React SPA)|
+:POST /payments/midtrans/charge;
+|Backend (Laravel API)|
+:Buat transaksi Midtrans Snap;
+:Kembalikan snap_token & redirect_url;
+|Guest / Client|
+:Bayar di jendela Snap;
+|Midtrans Snap|
+:Proses pembayaran;
+|Sistem (React SPA)|
+:Panggil /payments/midtrans/sync;
+|Backend (Laravel API)|
+:Terima webhook ATAU tarik status;
+if (Signature SHA512 valid?) then (tidak)
+  :Tolak notifikasi (403);
+  stop
+else (ya)
+endif
+if (Pembayaran berhasil?) then (tidak)
+  :payment.status = rejected;
+  :Kirim notifikasi pembayaran gagal ke client (web + WhatsApp);
+  |Sistem (React SPA)|
+  :Tampilkan pembayaran gagal;
+  stop
+else (ya)
+  :payment.status = verified;
+  :booking.status = paid;
+  :Kirim notifikasi pembayaran berhasil ke client (web + WhatsApp);
+  |Fonnte (WhatsApp)|
+  :Kirim pesan status pembayaran;
+endif
+
+|Client|
+:Buka /pesanan;
+:Pantau progres produksi & notifikasi;
+|Sistem (React SPA)|
+:GET /recommendations;
+:Tampilkan rekomendasi paket untuk client;
+|Client|
+if (Ada preview hasil?) then (ya)
+  if (Setujui hasil?) then (ya)
+    :Setujui hasil (review_status = approved);
+    |Backend (Laravel API)|
+    :Simpan review approved & catat progres;
+    :Kirim notifikasi ke admin/worker;
+  else (tidak)
+    :Minta revisi + catatan;
+    |Backend (Laravel API)|
+    :stage = revision; revision_count + 1;
+    :Kirim notifikasi revisi ke admin/worker (web + WhatsApp);
+  endif
+else (tidak)
+endif
+
+|Admin / Worker|
+:Kerjakan produksi & unggah hasil akhir (Google Drive);
+|Backend (Laravel API)|
+:booking.status = completed;
+:production_stage = delivered (100%);
+:Catat kas masuk (income);
+:Kirim notifikasi "Pesanan Selesai" ke client (web + WhatsApp);
+:Hitung & kirim rekomendasi paket berikutnya (web + WhatsApp);
+|Fonnte (WhatsApp)|
+:Kirim pesan pesanan selesai & rekomendasi;
+|Client|
+:Lihat hasil akhir & rekomendasi paket di /pesanan;
+stop
+@enduml

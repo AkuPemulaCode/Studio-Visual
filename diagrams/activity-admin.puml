@@ -1,0 +1,79 @@
+@startuml Activity-Admin-Inheartz
+' Activity Diagram - Admin Studio
+' Alur: login -> dashboard -> booking -> produksi -> pelanggan -> user -> paket
+'       -> portofolio -> audit log, termasuk notifikasi web + WhatsApp (v0.1.8)
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam defaultTextAlignment left
+
+|Admin|
+start
+:Masuk /masuk;
+|Backend (Laravel API)|
+:Autentikasi Sanctum (role = admin);
+|Sistem (React SPA)|
+:Redirect /admin;
+|Admin|
+:Buka dashboard monitoring;
+:Lihat statistik, revenue, saldo & kas studio;
+:Terima notifikasi pesanan baru (bell/toast + WhatsApp);
+|Fonnte (WhatsApp)|
+:Kirim pesan pesanan baru ke admin & staff produksi;
+
+|Admin|
+if (Kelola booking?) then (ya)
+  :/admin/bookings;
+  :Filter / cari booking;
+  :Ubah status, catatan, link Drive, preview, atau hapus booking;
+  |Backend (Laravel API)|
+  :Simpan perubahan & catat audit log;
+  :Kirim notifikasi perubahan status ke client (web + WhatsApp);
+  |Admin|
+  :Verifikasi / cek pembayaran Midtrans;
+else (tidak)
+endif
+
+if (Kelola produksi?) then (ya)
+  :/admin/production;
+  :Pindahkan kartu kanban\nqueued → transfer → culling → editing → review → revision → delivered;
+  :Unggah preview hasil & estimasi selesai;
+  |Backend (Laravel API)|
+  :Simpan booking_progress & hitung persentase;
+  :Kirim notifikasi progres ke client (web + WhatsApp);
+  |Admin|
+else (tidak)
+endif
+
+if (Kelola pelanggan?) then (ya)
+  :/admin/customers;
+  :Lihat data pelanggan;
+else (tidak)
+endif
+
+if (Kelola user?) then (ya)
+  :/admin/users;
+  :Kelola user & role (admin/production/client);
+else (tidak)
+endif
+
+if (Kelola paket?) then (ya)
+  :/admin/packages;
+  :CRUD paket layanan;
+else (tidak)
+endif
+
+if (Kelola portofolio?) then (ya)
+  :/admin/portfolios;
+  :CRUD portofolio;
+else (tidak)
+endif
+
+if (Lihat audit log?) then (ya)
+  :/admin/audit-logs;
+  :Lihat riwayat perubahan;
+else (tidak)
+endif
+stop
+@enduml

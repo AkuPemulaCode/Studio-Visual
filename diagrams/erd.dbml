@@ -1,0 +1,280 @@
+// ERD - Inheartz Studio (dbdiagram.io / DBML)
+// Paste ke https://dbdiagram.io/d  (Menu: Import > DBML / atau tempel di editor)
+// Backend: Laravel 12 + MySQL
+// Versi Dokumen: 0.1.8
+// Catatan: rekomendasi paket (GET /recommendations) dihitung dari riwayat
+// booking/kategori/harga sehingga tidak memerlukan tabel baru. Notifikasi
+// WhatsApp dikirim via Fonnte dan tidak disimpan sebagai tabel terpisah.
+
+Table users {
+  id bigint [pk, increment]
+  name varchar
+  email varchar [unique]
+  phone varchar(30) [null]
+  role enum('admin', 'production', 'client') [default: 'client']
+  email_verified_at timestamp [null]
+  password varchar
+  remember_token varchar [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table categories {
+  id bigint [pk, increment]
+  name varchar(100)
+  slug varchar(120) [unique]
+  description text [null]
+  image varchar [null]
+  is_active boolean [default: true]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table packages {
+  id bigint [pk, increment]
+  category_id bigint [null, ref: > categories.id]
+  name varchar
+  slug varchar(150) [unique]
+  description text [null]
+  price decimal(12,2) [default: 0]
+  duration varchar(50) [null]
+  photo_count varchar(50) [null]
+  unit varchar(30) [default: 'sesi']
+  features json [null]
+  is_popular boolean [default: false, note: 'Dipertahankan untuk kompatibilitas backend; tidak lagi ditampilkan di UI']
+  is_active boolean [default: true]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table portfolios {
+  id bigint [pk, increment]
+  category_id bigint [ref: > categories.id]
+  package_id bigint [null, ref: > packages.id]
+  title varchar
+  slug varchar(180) [unique]
+  image varchar [null]
+  description text [null]
+  shoot_date date [null]
+  is_published boolean [default: true]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (category_id, shoot_date) [name: 'portfolios_category_shoot_index']
+  }
+}
+
+Table availabilities {
+  id bigint [pk, increment]
+  date date
+  time time
+  quota int [default: 1]
+  booked int [default: 0]
+  is_open boolean [default: true]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (date, time) [unique, name: 'availabilities_date_time_unique']
+    date [name: 'availabilities_date_index']
+  }
+}
+
+Table bookings {
+  id bigint [pk, increment]
+  booking_code varchar(30) [unique]
+  user_id bigint [null, ref: > users.id]
+  package_id bigint [null, ref: > packages.id]
+  availability_id bigint [null, ref: > availabilities.id]
+  assigned_to bigint [null, ref: > users.id]
+  customer_name varchar
+  customer_email varchar
+  customer_phone varchar(30) [null]
+  location varchar [null]
+  notes text [null]
+  admin_note text [null]
+  drive_url varchar [null]
+  preview_url varchar [null]
+  booking_date date
+  booking_time time [null]
+  status enum('pending', 'awaiting_payment', 'paid', 'confirmed', 'ongoing', 'completed', 'cancelled') [default: 'awaiting_payment']
+  production_stage varchar(20) [default: 'queued']
+  production_percent tinyint [default: 0]
+  estimated_finish date [null]
+  production_started_at timestamp [null]
+  production_finished_at timestamp [null]
+  review_status enum('pending', 'approved', 'revision') [default: 'pending']
+  revision_count tinyint [default: 0]
+  total_price decimal(12,2) [default: 0]
+  completed_at timestamp [null]
+  cancelled_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    status [name: 'bookings_status_index']
+    booking_date [name: 'bookings_booking_date_index']
+  }
+}
+
+Table booking_progress {
+  id bigint [pk, increment]
+  booking_id bigint [ref: > bookings.id]
+  user_id bigint [null, ref: > users.id]
+  stage varchar(20)
+  status enum('in_progress', 'done', 'skipped') [default: 'in_progress']
+  note text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    booking_id [name: 'booking_progress_booking_id_index']
+  }
+}
+
+Table payment_methods {
+  id bigint [pk, increment]
+  name varchar
+  code varchar(50) [unique]
+  group enum('bank', 'va', 'ewallet', 'qris')
+  account_number varchar [null]
+  account_name varchar [null]
+  instructions text [null]
+  is_active boolean [default: true]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table payments {
+  id bigint [pk, increment]
+  booking_id bigint [ref: > bookings.id]
+  payment_method_id bigint [null, ref: > payment_methods.id]
+  amount decimal(12,2) [default: 0]
+  type enum('dp', 'full') [default: 'dp']
+  provider varchar [default: 'manual']
+  midtrans_order_id varchar [null]
+  snap_token varchar [null]
+  snap_url text [null]
+  transaction_status varchar [null]
+  fraud_status varchar [null]
+  payload json [null]
+  proof_path varchar [null]
+  status enum('pending', 'verified', 'rejected', 'refunded') [default: 'pending']
+  paid_at timestamp [null]
+  verified_by bigint [null, ref: > users.id]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    midtrans_order_id [name: 'payments_midtrans_order_id_index']
+    status [name: 'payments_status_index']
+  }
+}
+
+Table cash_transactions {
+  id bigint [pk, increment]
+  booking_id bigint [null, ref: > bookings.id]
+  type enum('income', 'expense') [default: 'income']
+  amount decimal(12,2)
+  description varchar [null]
+  occurred_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (booking_id, type) [unique, name: 'cash_transactions_booking_type_unique']
+  }
+}
+
+Table contact_messages {
+  id bigint [pk, increment]
+  name varchar
+  email varchar
+  subject varchar [null]
+  message text
+  is_read boolean [default: false]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table activity_logs {
+  id bigint [pk, increment]
+  user_id bigint [null, ref: > users.id]
+  action varchar(100)
+  description text [null]
+  model_type varchar [null]
+  model_id bigint [null]
+  meta json [null]
+  ip_address varchar(45) [null]
+  created_at timestamp [null]
+
+  indexes {
+    action [name: 'activity_logs_action_index']
+    (model_type, model_id) [name: 'activity_logs_model_index']
+  }
+}
+
+Table notifications {
+  id varchar(36) [pk]
+  type varchar
+  notifiable_type varchar
+  notifiable_id bigint
+  data text [note: 'JSON: type, title, message, url, booking_id (termasuk notifikasi rekomendasi paket)']
+  read_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (notifiable_type, notifiable_id) [name: 'notifications_notifiable_type_notifiable_id_index']
+  }
+}
+
+Table registration_otps {
+  id bigint [pk, increment]
+  email varchar
+  phone varchar
+  otp_hash varchar
+  attempts tinyint [default: 0]
+  expires_at timestamp
+  used_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    email [name: 'registration_otps_email_index']
+  }
+}
+
+Table password_reset_otps {
+  id bigint [pk, increment]
+  email varchar
+  phone varchar
+  otp_hash varchar
+  attempts tinyint [default: 0]
+  expires_at timestamp
+  used_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    email [name: 'password_reset_otps_email_index']
+  }
+}
+
+Table personal_access_tokens {
+  id bigint [pk, increment]
+  tokenable_type varchar
+  tokenable_id bigint
+  name varchar
+  token varchar(64) [unique]
+  abilities text [null]
+  last_used_at timestamp [null]
+  expires_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (tokenable_type, tokenable_id) [name: 'personal_access_tokens_tokenable_index']
+  }
+}

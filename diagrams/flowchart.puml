@@ -1,0 +1,126 @@
+@startuml Flowchart-Alur-Web-Inheartz
+' Flowchart - alur web Inheartz Studio
+' Mencakup navigasi rute publik, booking/pembayaran, autentikasi,
+' redirect berbasis peran, dashboard admin, dashboard produksi,
+' notifikasi web + WhatsApp, rekomendasi paket,
+' serta penanganan offline / gagal database.
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam defaultTextAlignment left
+
+|Guest|
+start
+:Buka situs Inheartz Studio (/);
+|Sistem (React SPA)|
+if (Perangkat online?) then (tidak)
+  :Tampilkan /offline + tombol "Coba Lagi";
+  stop
+else (ya)
+endif
+if (API & database dapat diakses?) then (tidak)
+  :Tampilkan popup "Koneksi Database Bermasalah";
+  :Tombol Tutup / Muat Ulang;
+  stop
+else (ya)
+endif
+
+|Guest|
+:Jelajahi halaman publik\n(Home, Layanan, Portofolio/Kategori, Jadwal);
+if (Pilih menu utama?) then (Booking)
+  :/booking;
+  :Pilih paket → jadwal → data → konfirmasi;
+  |Backend (Laravel API)|
+  :Buat booking (awaiting_payment) & kurangi kuota;
+  :Kirim notifikasi pesanan baru ke admin/staff (web + WhatsApp);
+  |Guest|
+  :/pembayaran?booking=KODE;
+  if (Batalkan pembayaran?) then (ya)
+    |Backend (Laravel API)|
+    :booking = cancelled & kuota dikembalikan;
+    :Kirim notifikasi pembatalan ke client (web + WhatsApp);
+    stop
+  else (tidak)
+  endif
+  |Guest|
+  :Bayar via Midtrans Snap;
+  |Midtrans Snap|
+  :Proses pembayaran;
+  |Backend (Laravel API)|
+  :Webhook / sync status pembayaran;
+  if (Pembayaran berhasil?) then (tidak)
+    :payment = rejected / pending;
+    :Kirim notifikasi pembayaran gagal ke client (web + WhatsApp);
+    |Sistem (React SPA)|
+    :Tampilkan pembayaran gagal / menunggu;
+    stop
+  else (ya)
+    :payment = verified; booking = paid;
+    :Kirim notifikasi pembayaran berhasil ke client (web + WhatsApp);
+  endif
+  |Client|
+  :/pesanan (wajib login);
+  :Pantau progres produksi & notifikasi;
+  :Lihat rekomendasi paket dari /recommendations;
+  if (Ada preview hasil?) then (ya)
+    :Setujui hasil / minta revisi;
+    |Backend (Laravel API)|
+    :Kirim notifikasi review/revisi ke admin/worker (web + WhatsApp);
+  else (tidak)
+  endif
+  stop
+else (tidak)
+  if (Pilih Pesanan?) then (ya)
+    |Client|
+    if (Sudah login?) then (tidak)
+      :/masuk;
+      |Backend (Laravel API)|
+      :Autentikasi Sanctum;
+      |Client|
+    else (ya)
+    endif
+    :/pesanan;
+    :Lihat daftar pesanan & progres produksi;
+    :Cek status pembayaran / bayar / batalkan;
+    :Lihat rekomendasi paket;
+    if (Ada preview hasil?) then (ya)
+      :Setujui hasil / minta revisi;
+    else (tidak)
+    endif
+    stop
+  else (tidak)
+    if (Pilih Akun?) then (ya)
+      :/daftar / /masuk / /lupa-password;
+      |Backend (Laravel API)|
+      :Autentikasi + OTP WhatsApp (Fonnte);
+      |Sistem (React SPA)|
+      if (Peran = admin?) then (ya)
+        |Admin|
+        :Redirect /admin;
+        :Monitoring, Booking, Produksi, Pelanggan,\nUser, Paket, Portofolio, Audit Log;
+        :Kelola status, produksi, pembayaran, user, dan konten;
+        :Lihat saldo/kas & audit log;
+        :Terima notifikasi pesanan baru (web + WhatsApp);
+        stop
+      else (tidak)
+        if (Peran = production?) then (ya)
+          |Worker (Produksi)|
+          :Redirect /worker;
+          :Produksi (kanban), Booking, Pelanggan;
+          :Ubah tahapan produksi & status booking;
+          :Terima notifikasi pesanan baru (web + WhatsApp);
+          stop
+        else (client)
+          |Client|
+          :Redirect / atau /pesanan;
+          stop
+        endif
+      endif
+    else (tidak)
+      :Lihat paket, FAQ, portofolio,\nfilter kategori/tanggal, detail karya;
+      stop
+    endif
+  endif
+endif
+@enduml

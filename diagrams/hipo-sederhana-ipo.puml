@@ -1,0 +1,20 @@
+@startuml HIPO-Sederhana-IPO-Inheartz
+' HIPO - Input / Process / Output sederhana (Modul Booking)
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor #333333
+}
+title HIPO - Input / Process / Output\nModul Booking - Inheartz Studio
+
+package "Modul Booking" {
+  rectangle "INPUT\n- Paket\n- Tanggal & jam\n- Data pemesan\n- Kuota slot" as I
+  rectangle "PROCESS\n- Validasi ketersediaan slot\n- Membuat data booking\n- Mengurangi kuota slot" as P
+  rectangle "OUTPUT\n- Kode booking\n- Status awaiting_payment\n- Tagihan pembayaran" as O
+  I -right-> P
+  P -right-> O
+}
+@enduml

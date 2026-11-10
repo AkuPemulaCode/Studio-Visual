@@ -1,0 +1,21 @@
+@startwbs HIPO-Sederhana-Hierarchy-Inheartz
+' HIPO - Hierarchy Chart sederhana (versi ringkas untuk Bab 2)
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam defaultTextAlignment left
+
+* Inheartz Studio\n(Sistem Web)
+** 1. Modul Publik
+*** Beranda
+*** Layanan & Paket
+*** Portofolio
+** 2. Modul Booking
+*** Pilih Paket
+*** Jadwal & Slot
+*** Data Pemesan
+*** Konfirmasi
+** 3. Modul Pembayaran
+*** Tagihan
+*** Midtrans Snap
+*** Cek Status Pembayaran
+@endwbs

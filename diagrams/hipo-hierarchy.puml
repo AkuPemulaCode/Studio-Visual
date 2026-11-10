@@ -1,0 +1,66 @@
+@startwbs HIPO-Hierarchy-Inheartz
+' HIPO - Hierarchy Chart (H Chart) - Inheartz Studio
+' Menampilkan dekomposisi modul sistem secara hierarkis (top-down).
+' Versi Dokumen: 0.1.8
+' Render: https://www.plantuml.com/plantuml/uml  (paste)
+skinparam shadowing false
+skinparam defaultTextAlignment left
+
+* Inheartz Studio\n(Sistem Web)
+** 1. Modul Publik
+*** 1.1 Beranda & Hero
+*** 1.2 Layanan / Paket & FAQ
+*** 1.3 Portofolio & Kategori
+*** 1.4 Jadwal & Ketersediaan
+** 2. Modul Akun & Autentikasi
+*** 2.1 Login
+*** 2.2 Daftar Akun + OTP WhatsApp
+*** 2.3 Lupa Password + OTP WhatsApp
+*** 2.4 Profil & Logout
+*** 2.5 RBAC & Proteksi Rute
+** 3. Modul Booking
+*** 3.1 Pilih Paket
+*** 3.2 Kalender & Slot Jam
+*** 3.3 Data Pemesan
+*** 3.4 Konfirmasi & Buat Booking
+*** 3.5 Batalkan Booking
+** 4. Modul Pembayaran & Kas
+*** 4.1 Tagihan Menunggu Pembayaran
+*** 4.2 Midtrans Snap
+*** 4.3 Webhook / Sync / Rekonsiliasi
+*** 4.4 Cek Status Pembayaran
+*** 4.5 Ledger Kas (Income / Expense)
+** 5. Modul Produksi
+*** 5.1 Papan Kanban
+*** 5.2 Update Tahapan & Persentase
+*** 5.3 Estimasi Selesai
+*** 5.4 Preview Hasil
+*** 5.5 Riwayat Progres
+** 6. Modul Pesanan & Review
+*** 6.1 Progress Pesanan
+*** 6.2 Setujui Hasil
+*** 6.3 Minta Revisi
+*** 6.4 Hasil Akhir (Google Drive)
+** 7. Modul Notifikasi & Rekomendasi
+*** 7.1 Notifikasi In-App (Bell / Toast / Suara)
+*** 7.2 Notifikasi WhatsApp (Fonnte)
+*** 7.3 Rekomendasi Paket
+** 8. Modul Dashboard Admin
+*** 8.1 Monitoring & Statistik
+*** 8.2 Finance / Saldo
+*** 8.3 Booking
+*** 8.4 Pelanggan
+*** 8.5 User & Role
+*** 8.6 Paket
+*** 8.7 Portofolio
+*** 8.8 Audit Log
+** 9. Modul Dashboard Produksi
+*** 9.1 Kanban Produksi
+*** 9.2 Booking (Ubah Status)
+*** 9.3 Pelanggan
+** 10. Modul Infrastruktur & Ketahanan
+*** 10.1 Offline Gate
+*** 10.2 Database Alert
+*** 10.3 Polling & Sinkronisasi
+*** 10.4 Fallback Mock / Local Store
+@endwbs
