@@ -2,7 +2,7 @@
 
 **Enhanced Entity Relationship Diagram** untuk backend Laravel 12 (MySQL). Dokumen ini memperluas ERD biasa dengan konsep EER: **generalisasi/spesialisasi**, **entitas lemah (weak entity)**, **agregasi**, serta **atribut multinilai/turunan**. Struktur fisik mengikuti migrasi di `be_photograph/database/migrations`.
 
-> **Versi Dokumen: 0.2.1**
+> **Versi Dokumen: 0.2.2**
 
 - Versi **dbdiagram.io (DBML)**: [diagrams/erd.dbml](./diagrams/erd.dbml)
 - Dokumen terkait: [prd.md](./prd.md), [README.md](./README.md).
@@ -102,6 +102,7 @@ erDiagram
         string customer_name
         string customer_email
         string customer_phone
+        enum booking_category "personal | event | corporate_umkm (default: personal)"
         string location
         text notes
         text admin_note
@@ -352,7 +353,7 @@ Katalog layanan. `features` pada `packages` disimpan sebagai JSON array (atribut
 Slot jadwal. Kombinasi `date` + `time` unik. Endpoint `/availability?date=` membaca tabel ini. `booked` merupakan atribut turunan dari jumlah booking aktif.
 
 ### bookings
-Data inti pemesanan. `booking_code` format `INH-YYYY-XXXX`. Alur status: `pending → awaiting_payment → paid → confirmed → ongoing → completed` (bisa `cancelled`). Kolom `admin_note` dan `drive_url` diisi admin. Kolom produksi: `production_stage` (tahapan aktif: `queued | transfer | culling | editing | review | revision | delivered`), `production_percent` (persentase), `estimated_finish`, `production_started_at`, `production_finished_at`. Kolom review/revisi: `preview_url` (tautan hasil untuk ditinjau klien), `review_status` (`pending | approved | revision`), `revision_count`.
+Data inti pemesanan. `booking_code` format `INH-YYYY-XXXX`. Alur status: `pending → awaiting_payment → paid → confirmed → ongoing → completed` (bisa `cancelled`). Kolom `booking_category` membagi pesanan menjadi `personal`, `event`, atau `corporate_umkm` (default `personal`); pelanggan memilihnya di langkah pertama booking dan admin dapat mengubahnya. Kolom `admin_note` dan `drive_url` diisi admin. Kolom produksi: `production_stage` (tahapan aktif: `queued | transfer | culling | editing | review | revision | delivered`), `production_percent` (persentase), `estimated_finish`, `production_started_at`, `production_finished_at`. Kolom review/revisi: `preview_url` (tautan hasil untuk ditinjau klien), `review_status` (`pending | approved | revision`), `revision_count`.
 
 ### booking_progress (entitas lemah)
 Riwayat (timeline) tahapan produksi. Setiap perubahan tahapan oleh admin menambah satu baris (`stage`, `status`, `note`, `user_id`). Dipakai halaman Progres Produksi admin dan Progress Pesanan pelanggan.
@@ -411,7 +412,7 @@ Notifikasi in-app (Laravel database notifications, polymorphic `notifiable`). Ko
 ## 9. Catatan Implementasi
 
 - Foreign key: `payments` → `bookings` (`cascadeOnDelete`); `bookings` → `packages`/`availabilities` (`nullOnDelete`).
-- Index: `bookings.status`, `bookings.booking_date`, `availabilities.date`, `payments.status`, `payments.midtrans_order_id`.
+- Index: `bookings.status`, `bookings.booking_category`, `bookings.booking_date`, `availabilities.date`, `payments.status`, `payments.midtrans_order_id`.
 - Autentikasi memakai Laravel Sanctum (Bearer token). FE mengirim `Authorization: Bearer <token>`.
 - `features` (packages) dan `meta` (activity_logs) sebagai kolom `json`.
 - Spesialisasi `users.role` diimplementasikan sebagai **single-table inheritance**; subkelas pada bagian 2 bersifat konseptual untuk memudahkan pemahaman EER.

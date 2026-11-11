@@ -4,7 +4,7 @@
 ' redirect berbasis peran, dashboard admin, dashboard produksi,
 ' notifikasi web + WhatsApp, rekomendasi paket,
 ' serta penanganan offline / gagal database.
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam shadowing false
 skinparam conditionStyle diamond
@@ -30,7 +30,7 @@ endif
 :Jelajahi halaman publik\n(Home, Layanan, Portofolio/Kategori, Jadwal);
 if (Pilih menu utama?) then (Booking)
   :/booking;
-  :Pilih paket → jadwal → data → konfirmasi;
+  :Pilih kategori (Personal / Event / Corporate & UMKM)\n→ paket → jadwal → data → konfirmasi;
   |Backend (Laravel API)|
   :Buat booking (awaiting_payment) & kurangi kuota;
   :Kirim notifikasi pesanan baru ke admin/staff (web + WhatsApp);
@@ -99,7 +99,7 @@ else (tidak)
         |Admin|
         :Redirect /admin;
         :Monitoring, Booking, Produksi, Pelanggan,\nUser, Paket, Portofolio, Audit Log;
-        :Kelola status, produksi, pembayaran, user, dan konten;
+        :Kelola status, kategori, produksi, pembayaran, user, dan konten;
         :Lihat saldo/kas & audit log;
         :Terima notifikasi pesanan baru (web + WhatsApp);
         stop

@@ -2,7 +2,7 @@
 ' Activity Diagram - Admin Studio
 ' Alur: login -> dashboard -> booking -> produksi -> pelanggan -> user -> paket
 '       -> portofolio -> audit log, termasuk notifikasi web + WhatsApp (v0.1.8)
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam shadowing false
 skinparam conditionStyle diamond
@@ -26,7 +26,7 @@ start
 if (Kelola booking?) then (ya)
   :/admin/bookings;
   :Filter / cari booking;
-  :Ubah status, catatan, link Drive, preview, atau hapus booking;
+  :Ubah status, kategori (Personal / Event / Corporate & UMKM),\ncatatan, link Drive, preview, atau hapus booking;
   |Backend (Laravel API)|
   :Simpan perubahan & catat audit log;
   :Kirim notifikasi perubahan status ke client (web + WhatsApp);

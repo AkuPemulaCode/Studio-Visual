@@ -2,9 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import packageService from "../services/packageService";
 import bookingService from "../services/bookingService";
-import { packages as mockPackages, timeSlots } from "../data/mock";
+import {
+  packages as mockPackages,
+  packageSegments,
+  timeSlots,
+} from "../data/mock";
 import { useAuth } from "../context/authContext";
-import { formatIDR } from "../utils/format";
+import {
+  BOOKING_CATEGORIES,
+  bookingCategoryLabel,
+  formatIDR,
+} from "../utils/format";
 
 const WEEKDAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
@@ -25,7 +33,19 @@ function toIsoDate(date) {
   return `${year}-${month}-${day}`;
 }
 
-const STEPS = ["Paket", "Jadwal", "Data", "Konfirmasi"];
+const STEPS = ["Kategori", "Paket", "Jadwal", "Data", "Konfirmasi"];
+
+function segmentsOf(item) {
+  if (!item) return [];
+  return Array.isArray(item.segments)
+    ? item.segments
+    : packageSegments[item.slug] || [];
+}
+
+function matchesCategory(item, category) {
+  const segments = segmentsOf(item);
+  return segments.length === 0 || segments.includes(category);
+}
 
 export default function Booking() {
   const [searchParams] = useSearchParams();
@@ -34,6 +54,7 @@ export default function Booking() {
 
   const [packages, setPackages] = useState(mockPackages);
   const [step, setStep] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState("");
@@ -63,7 +84,8 @@ export default function Booking() {
         const found = list.find((item) => item.slug === slug);
         if (found) {
           setSelectedPackage(found);
-          setStep(1);
+          setSelectedCategory(segmentsOf(found)[0] || "personal");
+          setStep(2);
         }
       }
     });
@@ -107,14 +129,30 @@ export default function Booking() {
   const updateForm = (key, value) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const categoryPackages = useMemo(() => {
+    if (!selectedCategory) return packages;
+    const filtered = packages.filter((item) =>
+      matchesCategory(item, selectedCategory)
+    );
+    return filtered.length ? filtered : packages;
+  }, [packages, selectedCategory]);
+
+  const handleSelectCategory = (category) => {
+    setSelectedCategory(category);
+    if (selectedPackage && !matchesCategory(selectedPackage, category)) {
+      setSelectedPackage(null);
+    }
+  };
+
   const canContinue =
-    (step === 0 && selectedPackage) ||
-    (step === 1 && selectedDate && selectedTime) ||
-    (step === 2 && form.name && form.phone && form.email) ||
-    step === 3;
+    (step === 0 && selectedCategory) ||
+    (step === 1 && selectedPackage) ||
+    (step === 2 && selectedDate && selectedTime) ||
+    (step === 3 && form.name && form.phone && form.email) ||
+    step === 4;
 
   const handleNext = () => {
-    if (step < 3 && canContinue) setStep(step + 1);
+    if (step < 4 && canContinue) setStep(step + 1);
   };
 
   const handleSubmit = async () => {
@@ -122,6 +160,7 @@ export default function Booking() {
     setError("");
     try {
       const payload = {
+        booking_category: selectedCategory,
         package_id: selectedPackage.id,
         package_name: selectedPackage.name,
         price: selectedPackage.price,
@@ -149,15 +188,15 @@ export default function Booking() {
           <p className="eyebrow mb-3">Jadwal & Booking</p>
           <h1 className="section-title">Pesan Sesi Anda</h1>
           <p className="mt-4 max-w-2xl text-sm md:text-base text-gray-500 leading-relaxed">
-            Ikuti empat langkah mudah untuk memesan sesi di Inheartz Studio.
-            Pilih paket, atur jadwal, lengkapi data, lalu konfirmasi.
+            Ikuti lima langkah mudah untuk memesan sesi di Inheartz Studio.
+            Pilih kategori, paket, atur jadwal, lengkapi data, lalu konfirmasi.
           </p>
         </div>
       </section>
 
       <section className="border-b border-gray-300">
         <div className="container-editorial">
-          <ol className="grid grid-cols-4 divide-x divide-gray-200 border-x border-gray-200">
+          <ol className="grid grid-cols-5 divide-x divide-gray-200 border-x border-gray-200">
             {STEPS.map((label, index) => (
               <li
                 key={label}
@@ -175,7 +214,7 @@ export default function Booking() {
                   {index + 1}
                 </span>
                 <span
-                  className={`text-[10px] md:text-xs font-bold uppercase tracking-widest ${
+                  className={`text-[9px] md:text-xs font-bold uppercase tracking-widest ${
                     index <= step ? "text-gray-900" : "text-gray-400"
                   }`}
                 >
@@ -192,11 +231,110 @@ export default function Booking() {
           <div className="lg:col-span-2">
             {step === 0 && (
               <div className="animate-fade-in">
-                <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight mb-6">
-                  Pilih Paket
+                <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight mb-2">
+                  Pilih Kategori Booking
                 </h2>
+                <p className="mb-6 text-sm text-gray-500 leading-relaxed">
+                  Pilih kategori yang paling sesuai agar paket yang tampil
+                  relevan dengan kebutuhan Anda.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  {BOOKING_CATEGORIES.map((category) => {
+                    const active = selectedCategory === category.key;
+                    return (
+                      <button
+                        key={category.key}
+                        type="button"
+                        onClick={() => handleSelectCategory(category.key)}
+                        className={`card p-5 text-left transition-all ${
+                          active
+                            ? "border-gray-900 ring-1 ring-gray-900"
+                            : "hover:border-gray-400"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="eyebrow">Kategori</span>
+                          {active && (
+                            <span className="badge bg-gray-900 text-white">
+                              Dipilih
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="mt-3 font-display text-lg font-extrabold uppercase tracking-tight">
+                          {category.label}
+                        </h3>
+                        <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                          {category.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 1 && (
+              <div className="animate-fade-in">
+                <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight">
+                      Pilih Paket
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Kategori: {bookingCategoryLabel(selectedCategory)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setStep(0)}
+                    className="text-xs font-bold uppercase tracking-widest text-gray-900 underline underline-offset-4"
+                  >
+                    Ubah kategori
+                  </button>
+                </div>
+
+                <div className="card mb-6 grid grid-cols-1 gap-5 p-5 sm:grid-cols-2">
+                  <div>
+                    <label className="label">Kategori Harga &amp; Paket</label>
+                    <select
+                      className="input"
+                      value={selectedCategory}
+                      onChange={(e) => handleSelectCategory(e.target.value)}
+                    >
+                      <option value="" disabled>
+                        -- Pilih kategori --
+                      </option>
+                      {BOOKING_CATEGORIES.map((category) => (
+                        <option key={category.key} value={category.key}>
+                          {category.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Paket &amp; Harga</label>
+                    <select
+                      className="input"
+                      value={selectedPackage ? String(selectedPackage.id) : ""}
+                      onChange={(e) => {
+                        const found = categoryPackages.find(
+                          (item) => String(item.id) === e.target.value
+                        );
+                        setSelectedPackage(found || null);
+                      }}
+                    >
+                      <option value="">-- Pilih paket --</option>
+                      {categoryPackages.map((item) => (
+                        <option key={item.id} value={String(item.id)}>
+                          {item.name} — {formatIDR(item.price)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {packages.map((item) => {
+                  {categoryPackages.map((item) => {
                     const active = selectedPackage?.id === item.id;
                     return (
                       <button
@@ -233,7 +371,7 @@ export default function Booking() {
               </div>
             )}
 
-            {step === 1 && (
+            {step === 2 && (
               <div className="animate-fade-in">
                 <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight mb-6">
                   Pilih Tanggal & Jam
@@ -348,7 +486,7 @@ export default function Booking() {
               </div>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <div className="animate-fade-in">
                 <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight mb-6">
                   Data Pemesan
@@ -395,12 +533,18 @@ export default function Booking() {
               </div>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <div className="animate-fade-in">
                 <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight mb-6">
                   Konfirmasi Booking
                 </h2>
                 <div className="card divide-y divide-gray-200">
+                  <div className="flex items-center justify-between p-5">
+                    <span className="text-sm text-gray-500">Kategori</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {bookingCategoryLabel(selectedCategory)}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between p-5">
                     <span className="text-sm text-gray-500">Paket</span>
                     <span className="text-sm font-bold text-gray-900">
@@ -453,7 +597,7 @@ export default function Booking() {
                 Kembali
               </button>
 
-              {step < 3 ? (
+              {step < 4 ? (
                 <button
                   type="button"
                   onClick={handleNext}
@@ -481,6 +625,14 @@ export default function Booking() {
                 Ringkasan
               </h3>
               <dl className="space-y-4 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Kategori</dt>
+                  <dd className="text-right font-bold text-gray-900">
+                    {selectedCategory
+                      ? bookingCategoryLabel(selectedCategory)
+                      : "-"}
+                  </dd>
+                </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-gray-500">Paket</dt>
                   <dd className="text-right font-bold text-gray-900">

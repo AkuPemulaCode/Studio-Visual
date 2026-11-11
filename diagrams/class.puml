@@ -1,6 +1,6 @@
 @startuml Class-Inheartz-Studio
 ' Class Diagram (model domain) - Inheartz Studio
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam classAttributeIconSize 0
 skinparam shadowing false
@@ -72,6 +72,7 @@ class Booking {
   +customer_name : string
   +customer_email : string
   +customer_phone : string
+  +booking_category : "personal" | "event" | "corporate_umkm"
   +location : string
   +notes : text
   +booking_date : date
@@ -198,6 +199,7 @@ class ActivityLog {
   +ip_address : string
 }
 
+note for Booking "booking_category membagi pesanan menjadi Personal, Event, atau Corporate & UMKM. Pelanggan memilih kategori pada langkah pertama booking; admin dapat mengubahnya saat kelola pesanan."
 note for Package "is_popular dipertahankan untuk kompatibilitas backend, tetapi tidak lagi ditampilkan di UI (badge Populer dihapus)."
 note for Notification "Dipakai untuk notifikasi in-app (bell/toast/suara). WhatsApp dikirim melalui Fonnte untuk pesanan baru, perubahan status, progres produksi, dan rekomendasi paket."
 note "Rekomendasi paket dihitung dari riwayat booking/kategori/harga (GET /recommendations); tidak memiliki tabel khusus." as NRec

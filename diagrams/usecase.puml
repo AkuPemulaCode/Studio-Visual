@@ -1,6 +1,6 @@
 @startuml UseCase-Inheartz-Studio
 ' Use Case Diagram - Inheartz Studio
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml
 left to right direction
 skinparam packageStyle rectangle
@@ -24,7 +24,7 @@ rectangle "Inheartz Studio" {
   usecase "Lihat paket & FAQ" as UC02
   usecase "Lihat portofolio\n(filter kategori/tanggal & detail karya)" as UC03
   usecase "Lihat ketersediaan jadwal" as UC04
-  usecase "Buat booking 4 langkah" as UC05
+  usecase "Buat booking 5 langkah\n(kategori → paket → jadwal → data → konfirmasi)" as UC05
   usecase "Bayar via Midtrans Snap" as UC06
   usecase "Lihat tagihan belum dibayar" as UC07
   usecase "Batalkan pembayaran" as UC08
@@ -39,7 +39,7 @@ rectangle "Inheartz Studio" {
 
   ' ===== Dashboard admin =====
   usecase "Monitoring & statistik" as UC17
-  usecase "Kelola booking\n(status, catatan, link Drive, preview, hapus)" as UC18
+  usecase "Kelola booking\n(status, kategori, catatan, link Drive, preview, hapus)" as UC18
   usecase "Kelola papan produksi (kanban)" as UC19
   usecase "Kelola paket layanan" as UC20
   usecase "Kelola portofolio" as UC21

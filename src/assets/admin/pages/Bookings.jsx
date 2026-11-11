@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import adminService from "../../services/adminService";
 import paymentService from "../../services/paymentService";
 import AdminPageHeader from "../components/AdminPageHeader";
@@ -13,6 +14,9 @@ import {
   PRODUCTION_STAGES,
   productionStageLabel,
   productionStageStyle,
+  BOOKING_CATEGORIES,
+  bookingCategoryLabel,
+  bookingCategoryStyle,
 } from "../../utils/format";
 
 const FILTERS = [
@@ -26,12 +30,26 @@ const FILTERS = [
 
 const EMPTY_FORM = {
   status: "awaiting_payment",
+  bookingCategory: "personal",
   adminNote: "",
   driveUrl: "",
   productionStage: "queued",
   productionNote: "",
   estimatedFinish: "",
   previewUrl: "",
+};
+
+const EMPTY_EDIT = {
+  customer: "",
+  email: "",
+  phone: "",
+  bookingCategory: "personal",
+  package: "",
+  date: "",
+  time: "",
+  location: "",
+  notes: "",
+  amount: "",
 };
 
 export default function Bookings({ worker = false }) {
@@ -46,6 +64,11 @@ export default function Bookings({ worker = false }) {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncNote, setSyncNote] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [editing, setEditing] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_EDIT);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
   // const [workers, setWorkers] = useState([]);
   // const [assigning, setAssigning] = useState(null);
 
@@ -71,14 +94,18 @@ export default function Bookings({ worker = false }) {
     const keyword = query.trim().toLowerCase();
     return bookings.filter((booking) => {
       const matchStatus = filter === "all" || booking.status === filter;
+      const matchCategory =
+        categoryFilter === "all" ||
+        (booking.bookingCategory || booking.booking_category) ===
+          categoryFilter;
       const matchQuery =
         !keyword ||
         booking.id?.toLowerCase().includes(keyword) ||
         booking.customer?.toLowerCase().includes(keyword) ||
         booking.package?.toLowerCase().includes(keyword);
-      return matchStatus && matchQuery;
+      return matchStatus && matchCategory && matchQuery;
     });
-  }, [bookings, filter, query]);
+  }, [bookings, filter, categoryFilter, query]);
 
   const handleStatus = async (id, status) => {
     setSavingId(id);
@@ -96,6 +123,8 @@ export default function Bookings({ worker = false }) {
     setSyncNote("");
     setForm({
       status: booking.status || "awaiting_payment",
+      bookingCategory:
+        booking.bookingCategory || booking.booking_category || "personal",
       adminNote: booking.adminNote || "",
       driveUrl: booking.driveUrl || "",
       productionStage: booking.productionStage || "queued",
@@ -148,6 +177,7 @@ export default function Bookings({ worker = false }) {
     setSaving(true);
     const patch = {
       status: form.status,
+      bookingCategory: form.bookingCategory,
       adminNote: form.adminNote.trim(),
       driveUrl: form.driveUrl.trim(),
     };
@@ -182,11 +212,71 @@ export default function Bookings({ worker = false }) {
     await adminService.removeBooking(id);
   };
 
+  const openEdit = (booking) => {
+    setEditing(booking);
+    setEditError("");
+    setEditForm({
+      customer: booking.customer || "",
+      email: booking.email || "",
+      phone: booking.phone || "",
+      bookingCategory:
+        booking.bookingCategory || booking.booking_category || "personal",
+      package: booking.package || "",
+      date: booking.date || "",
+      time: booking.time || "",
+      location: booking.location || "",
+      notes: booking.notes || "",
+      amount: booking.amount != null ? String(booking.amount) : "",
+    });
+  };
+
+  const updateEdit = (key, value) =>
+    setEditForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleEditSave = async () => {
+    if (!editing) return;
+    if (!editForm.customer.trim()) {
+      setEditError("Nama pelanggan wajib diisi.");
+      return;
+    }
+    setEditSaving(true);
+    setEditError("");
+    try {
+      const patch = {
+        customer: editForm.customer.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        bookingCategory: editForm.bookingCategory,
+        package: editForm.package.trim() || "Paket Layanan",
+        date: editForm.date,
+        time: editForm.time,
+        location: editForm.location.trim(),
+        notes: editForm.notes,
+        amount: Number(editForm.amount) || 0,
+      };
+      await adminService.updateBooking(editing.id, patch);
+      await load();
+      setEditing(null);
+    } catch (err) {
+      setEditError(err.message || "Gagal menyimpan perubahan booking");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in">
       <AdminPageHeader
         title="Booking"
         description="Konfirmasi pesanan, beri catatan, dan lampirkan link Google Drive hasil sesi untuk pelanggan."
+        action={
+          <Link
+            to={worker ? "/worker/booking-baru" : "/admin/bookings/baru"}
+            className="btn-primary self-start"
+          >
+            + Tambah Booking
+          </Link>
+        }
       />
 
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -205,12 +295,26 @@ export default function Bookings({ worker = false }) {
             </button>
           ))}
         </div>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cari ID / pelanggan / paket"
-          className="input md:max-w-xs"
-        />
+        <div className="flex flex-col gap-3 sm:flex-row md:items-center">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="input sm:w-48"
+          >
+            <option value="all">Semua Kategori</option>
+            {BOOKING_CATEGORIES.map((category) => (
+              <option key={category.key} value={category.key}>
+                {category.label}
+              </option>
+            ))}
+          </select>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Cari ID / pelanggan / paket"
+            className="input md:max-w-xs"
+          />
+        </div>
       </div>
 
       <div className="card overflow-hidden">
@@ -220,6 +324,7 @@ export default function Bookings({ worker = false }) {
               <tr>
                 <th className="px-6 py-4 font-bold">ID</th>
                 <th className="px-6 py-4 font-bold">Pelanggan</th>
+                <th className="px-6 py-4 font-bold">Kategori</th>
                 <th className="px-6 py-4 font-bold">Paket</th>
                 <th className="px-6 py-4 font-bold">Jadwal</th>
                 <th className="px-6 py-4 font-bold">Status Progress</th>
@@ -236,6 +341,17 @@ export default function Bookings({ worker = false }) {
                     </td>
                     <td className="px-6 py-4 font-bold text-gray-900">
                       {booking.customer}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`badge ${bookingCategoryStyle(
+                          booking.bookingCategory || booking.booking_category
+                        )}`}
+                      >
+                        {bookingCategoryLabel(
+                          booking.bookingCategory || booking.booking_category
+                        )}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {booking.package}
@@ -274,6 +390,14 @@ export default function Bookings({ worker = false }) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        {!worker && (
+                          <button
+                            onClick={() => openEdit(booking)}
+                            className="border border-gray-300 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-700 transition-colors hover:border-gray-900"
+                          >
+                            Edit
+                          </button>
+                        )}
                         <button
                           onClick={() => openManage(booking)}
                           className="border border-gray-900 bg-gray-900 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white transition-colors hover:bg-gray-700"
@@ -303,7 +427,7 @@ export default function Bookings({ worker = false }) {
                   </tr>
                   {expanded === booking.id && (
                     <tr className="bg-gray-50">
-                      <td colSpan={7} className="px-6 py-4">
+                      <td colSpan={8} className="px-6 py-4">
                         <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
                           <div>
                             <p className="eyebrow mb-1">Email</p>
@@ -315,6 +439,15 @@ export default function Bookings({ worker = false }) {
                             <p className="eyebrow mb-1">Telepon</p>
                             <p className="text-gray-700">
                               {booking.phone || "-"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="eyebrow mb-1">Kategori Booking</p>
+                            <p className="text-gray-700">
+                              {bookingCategoryLabel(
+                                booking.bookingCategory ||
+                                  booking.booking_category
+                              )}
                             </p>
                           </div>
                           <div>
@@ -353,7 +486,7 @@ export default function Bookings({ worker = false }) {
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-6 py-12 text-center text-gray-400"
                   >
                     Tidak ada booking pada filter ini.
@@ -391,6 +524,14 @@ export default function Bookings({ worker = false }) {
                 <p className="eyebrow mb-1">Pelanggan</p>
                 <p className="font-bold text-gray-900">
                   {managing.customer}
+                </p>
+              </div>
+              <div>
+                <p className="eyebrow mb-1">Kategori Booking</p>
+                <p className="font-bold text-gray-900">
+                  {bookingCategoryLabel(
+                    managing.bookingCategory || managing.booking_category
+                  )}
                 </p>
               </div>
               <div>
@@ -501,6 +642,25 @@ export default function Bookings({ worker = false }) {
             </div>
 
             <div>
+              <label className="label">Kategori Booking</label>
+              <select
+                className="input"
+                value={form.bookingCategory}
+                onChange={(e) => update("bookingCategory", e.target.value)}
+              >
+                {BOOKING_CATEGORIES.map((category) => (
+                  <option key={category.key} value={category.key}>
+                    {category.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-gray-400 leading-relaxed">
+                Ubah kategori bila pesanan perlu dipindahkan ke UMKM,
+                Corporate, Personal, atau Event.
+              </p>
+            </div>
+
+            <div>
               <label className="label">Status Pesanan</label>
               <select
                 className="input"
@@ -538,6 +698,151 @@ export default function Bookings({ worker = false }) {
                 Link ini akan ditampilkan di halaman progress pesanan pelanggan
                 sebagai tombol "Buka Hasil".
               </p>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title={`Edit Booking${editing ? ` · ${editing.id}` : ""}`}
+        footer={
+          <>
+            <button onClick={() => setEditing(null)} className="btn-outline">
+              Batal
+            </button>
+            <button
+              onClick={handleEditSave}
+              disabled={editSaving}
+              className="btn-primary"
+            >
+              {editSaving ? "Menyimpan..." : "Simpan Booking"}
+            </button>
+          </>
+        }
+      >
+        {editing && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 gap-4 border border-gray-100 bg-gray-50 p-4 text-xs sm:grid-cols-2">
+              <div>
+                <p className="eyebrow mb-1">ID Booking</p>
+                <p className="font-mono text-gray-900">{editing.id}</p>
+              </div>
+              <div>
+                <p className="eyebrow mb-1">Status Saat Ini</p>
+                <span className={`badge ${statusStyle(editing.status)}`}>
+                  {statusLabel(editing.status)}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label className="label">Nama Pelanggan</label>
+                <input
+                  className="input"
+                  value={editForm.customer}
+                  onChange={(e) => updateEdit("customer", e.target.value)}
+                  placeholder="Nama pelanggan"
+                />
+              </div>
+              <div>
+                <label className="label">Email</label>
+                <input
+                  type="email"
+                  className="input"
+                  value={editForm.email}
+                  onChange={(e) => updateEdit("email", e.target.value)}
+                  placeholder="nama@email.com"
+                />
+              </div>
+              <div>
+                <label className="label">No. Telepon</label>
+                <input
+                  className="input"
+                  value={editForm.phone}
+                  onChange={(e) => updateEdit("phone", e.target.value)}
+                  placeholder="08xxxxxxxxxx"
+                />
+              </div>
+              <div>
+                <label className="label">Kategori Booking</label>
+                <select
+                  className="input"
+                  value={editForm.bookingCategory}
+                  onChange={(e) =>
+                    updateEdit("bookingCategory", e.target.value)
+                  }
+                >
+                  {BOOKING_CATEGORIES.map((category) => (
+                    <option key={category.key} value={category.key}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">Paket</label>
+                <input
+                  className="input"
+                  value={editForm.package}
+                  onChange={(e) => updateEdit("package", e.target.value)}
+                  placeholder="Nama paket"
+                />
+              </div>
+              <div>
+                <label className="label">Nilai Pesanan (IDR)</label>
+                <input
+                  type="number"
+                  className="input"
+                  value={editForm.amount}
+                  onChange={(e) => updateEdit("amount", e.target.value)}
+                  placeholder="Harga pesanan"
+                />
+              </div>
+              <div>
+                <label className="label">Tanggal Sesi</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={editForm.date}
+                  onChange={(e) => updateEdit("date", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="label">Jam Sesi</label>
+                <input
+                  className="input"
+                  value={editForm.time}
+                  onChange={(e) => updateEdit("time", e.target.value)}
+                  placeholder="09:00"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label">Lokasi Sesi</label>
+                <input
+                  className="input"
+                  value={editForm.location}
+                  onChange={(e) => updateEdit("location", e.target.value)}
+                  placeholder="Studio / alamat lokasi pemotretan"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label">Catatan Pelanggan</label>
+                <textarea
+                  className="input min-h-[100px] resize-y"
+                  value={editForm.notes}
+                  onChange={(e) => updateEdit("notes", e.target.value)}
+                  placeholder="Konsep, referensi, atau permintaan khusus"
+                />
+              </div>
+
+              {editError && (
+                <p className="sm:col-span-2 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {editError}
+                </p>
+              )}
             </div>
           </div>
         )}

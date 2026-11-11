@@ -2,7 +2,7 @@
 ' Activity Diagram - Worker Produksi
 ' Alur: login -> notifikasi -> dashboard produksi -> kanban -> status booking
 '       -> pelanggan, dengan notifikasi web + WhatsApp ke client (v0.1.8)
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam shadowing false
 skinparam conditionStyle diamond

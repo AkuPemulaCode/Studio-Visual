@@ -1,7 +1,7 @@
 // ERD - Inheartz Studio (dbdiagram.io / DBML)
 // Paste ke https://dbdiagram.io/d  (Menu: Import > DBML / atau tempel di editor)
 // Backend: Laravel 12 + MySQL
-// Versi Dokumen: 0.1.8
+// Versi Dokumen: 0.2.0
 // Catatan: rekomendasi paket (GET /recommendations) dihitung dari riwayat
 // booking/kategori/harga sehingga tidak memerlukan tabel baru. Notifikasi
 // WhatsApp dikirim via Fonnte dan tidak disimpan sebagai tabel terpisah.
@@ -91,6 +91,7 @@ Table bookings {
   customer_name varchar
   customer_email varchar
   customer_phone varchar(30) [null]
+  booking_category enum('personal', 'event', 'corporate_umkm') [default: 'personal']
   location varchar [null]
   notes text [null]
   admin_note text [null]
@@ -114,6 +115,7 @@ Table bookings {
 
   indexes {
     status [name: 'bookings_status_index']
+    booking_category [name: 'bookings_category_index']
     booking_date [name: 'bookings_booking_date_index']
   }
 }

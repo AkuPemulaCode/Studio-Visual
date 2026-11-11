@@ -71,6 +71,9 @@ function normalizePackage(payload = {}, base = {}) {
     features: Array.isArray(payload.features)
       ? payload.features
       : base.features || [],
+    segments: Array.isArray(payload.segments)
+      ? payload.segments
+      : base.segments || [],
   };
 }
 
@@ -91,7 +94,11 @@ function normalizePortfolio(payload = {}, base = {}) {
 export const store = {
   bookings: {
     all() {
-      return readCollection(KEYS.bookings, monitoring.bookings);
+      return readCollection(KEYS.bookings, monitoring.bookings).map((item) => ({
+        ...item,
+        bookingCategory:
+          item.bookingCategory || item.booking_category || "personal",
+      }));
     },
     find(id) {
       return this.all().find((item) => item.id === id) || null;
@@ -111,6 +118,8 @@ export const store = {
         customer: payload.name || payload.customer || "Guest",
         email: payload.email || payload.customerEmail || "",
         phone: payload.phone || "",
+        bookingCategory:
+          payload.booking_category || payload.bookingCategory || "personal",
         packageId: payload.package_id ?? payload.packageId ?? null,
         package: payload.package_name || payload.package || "Paket Layanan",
         date: payload.date || payload.booking_date || "",

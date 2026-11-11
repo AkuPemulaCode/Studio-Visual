@@ -172,6 +172,18 @@ export const packages = [
   },
 ];
 
+export const packageSegments = {
+  "product-photography": ["umkm", "corporate"],
+  "pre-wedding": ["personal"],
+  "personal-portrait": ["personal"],
+  "commercial-event": ["event", "corporate"],
+  "social-media-content": ["umkm"],
+  "graphic-design": ["umkm", "corporate"],
+  "social-media-design": ["umkm"],
+  "video-editing": ["corporate", "personal"],
+  "short-video-reels": ["umkm", "personal"],
+};
+
 export const categories = [
   {
     id: 1,

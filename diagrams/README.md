@@ -1,10 +1,28 @@
 # Diagrams - Inheartz Studio
 
-Kumpulan source code diagram (UML, ERD & HIPO) untuk dokumentasi sistem Inheartz Studio.
+Kumpulan source code diagram (UML, ERD, flowchart, dan HIPO) untuk dokumentasi sistem Inheartz Studio.
 
-> **Versi Dokumen: 0.1.8**
+> **Versi Dokumen: 0.2.0**
 >
-> **Lihat semua diagram langsung dalam Markdown:** [DIAGRAM.md](./DIAGRAM.md) (format Mermaid, render otomatis di GitHub/VS Code).
+> **Lihat semua diagram langsung dalam Markdown:** [DIAGRAM.md](./DIAGRAM.md) (Mermaid, render otomatis di GitHub/VS Code)
+>
+> **Ringkasan HIPO singkat untuk presentasi:** [hipo-sederhana.md](./hipo-sederhana.md)
+
+## Ringkasan sistem
+
+```mermaid
+flowchart LR
+    Guest[Guest / Client] --> Web[Website Inheartz]
+    Web --> Booking[Booking 5 Langkah]
+    Booking --> Payment[Midtrans Payment]
+    Payment --> Order[Pesanan & Progress]
+    Web --> Admin[Admin Dashboard]
+    Web --> Worker[Staff / Produksi]
+    Admin --> Manage[Manage Booking, User, Paket, Portofolio]
+    Worker --> Production[Kanban Produksi]
+    Admin --> Reports[Monitoring & Revenue]
+    Order --> Notify[Notifikasi Web + WhatsApp]
+```
 
 | File | Jenis | Tool / Cara render |
 | --- | --- | --- |
@@ -40,5 +58,5 @@ Pilih salah satu:
 - Struktur ERD mengikuti migrasi Laravel di `be_photograph/database/migrations`.
 - Skema database (EERD, Mermaid) juga ada di [../eerd.md](../eerd.md).
 - HIPO dipisah menjadi dua diagram: **Hierarchy Chart** (`hipo-hierarchy.puml`) dan **Input/Process/Output** (`hipo-ipo.puml`).
-- Fitur v0.1.8 yang tercermin di diagram: notifikasi WhatsApp (pesanan baru, perubahan status, progres produksi, rekomendasi paket) dan sistem rekomendasi paket (`GET /recommendations`).
+- Fitur v0.2.0 yang tercermin di diagram: kategori booking (Personal / Event / Corporate & UMKM) pada langkah pertama pemesanan dan dapat diubah admin, notifikasi WhatsApp (pesanan baru, perubahan status, progres produksi, rekomendasi paket), serta sistem rekomendasi paket (`GET /recommendations`).
 - PRD terkait: [../prd.md](../prd.md).

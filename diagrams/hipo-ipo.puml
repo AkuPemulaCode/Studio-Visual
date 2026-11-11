@@ -1,7 +1,7 @@
 @startuml HIPO-IPO-Inheartz
 ' HIPO - Input / Process / Output (IPO) Chart - Inheartz Studio
 ' Setiap modul dipisahkan: INPUT -> PROCESS -> OUTPUT.
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam shadowing false
 skinparam packageStyle rectangle
@@ -10,7 +10,7 @@ skinparam rectangle {
   BackgroundColor White
   BorderColor #333333
 }
-title HIPO - Input / Process / Output (IPO)\nInheartz Studio v0.1.8
+title HIPO - Input / Process / Output (IPO)\nInheartz Studio v0.2.0
 
 package "1. Modul Publik" {
   rectangle "INPUT\n- Konten paket, kategori, portofolio, FAQ\n- Tanggal pencarian jadwal" as I1
@@ -29,9 +29,9 @@ package "2. Modul Akun & Autentikasi" {
 }
 
 package "3. Modul Booking" {
-  rectangle "INPUT\n- Paket, tanggal, jam\n- Data pemesan\n- Kuota slot" as I3
-  rectangle "PROCESS\n- Validasi kuota\n- Buat booking awaiting_payment\n- Kurangi kuota slot" as P3
-  rectangle "OUTPUT\n- Kode booking\n- Status awaiting_payment\n- Tagihan pembayaran\n- Notif pesanan baru (admin/staff)" as O3
+  rectangle "INPUT\n- Kategori booking (Personal / Event / Corporate & UMKM)\n- Paket, tanggal, jam\n- Data pemesan\n- Kuota slot" as I3
+  rectangle "PROCESS\n- Validasi kategori & kuota\n- Buat booking awaiting_payment\n- Kurangi kuota slot" as P3
+  rectangle "OUTPUT\n- Kode booking + kategori\n- Status awaiting_payment\n- Tagihan pembayaran\n- Notif pesanan baru (admin/staff)" as O3
   I3 -right-> P3
   P3 -right-> O3
 }

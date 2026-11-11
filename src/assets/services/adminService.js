@@ -10,6 +10,96 @@ function toNumber(value) {
   return Number(value) || 0;
 }
 
+const DATA_CACHE = {};
+const CACHE_TTL = 15000;
+
+function readCache(key) {
+  const entry = DATA_CACHE[key];
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    delete DATA_CACHE[key];
+    return null;
+  }
+  return entry.value;
+}
+
+function writeCache(key, value, ttl = CACHE_TTL) {
+  DATA_CACHE[key] = {
+    value,
+    expiresAt: Date.now() + ttl,
+  };
+  return value;
+}
+
+function normalizeBookingRecord(booking = {}) {
+  const category =
+    booking.bookingCategory ||
+    booking.booking_category ||
+    booking.category ||
+    "personal";
+
+  const amount =
+    booking.amount ??
+    booking.total ??
+    booking.price ??
+    booking.package_price ??
+    0;
+
+  return {
+    ...booking,
+    id: booking.id ?? booking.booking_id ?? booking.bookingId ?? "",
+    customer:
+      booking.customer ||
+      booking.name ||
+      booking.customer_name ||
+      booking.client_name ||
+      "Guest",
+    email: booking.email || booking.customer_email || booking.customerEmail || "",
+    phone: booking.phone || booking.customer_phone || booking.phone_number || "",
+    package:
+      booking.package ||
+      booking.package_name ||
+      booking.packageName ||
+      booking.service ||
+      "Paket Layanan",
+    bookingCategory: category,
+    booking_category: category,
+    status: booking.status || booking.booking_status || "awaiting_payment",
+    amount: toNumber(amount),
+    date: booking.date || booking.booking_date || booking.session_date || "",
+    time: booking.time || booking.booking_time || booking.session_time || "",
+    location: booking.location || booking.address || "",
+    notes: booking.notes || booking.customer_note || booking.note || "",
+    adminNote: booking.adminNote || booking.admin_note || "",
+    driveUrl: booking.driveUrl || booking.drive_url || "",
+    previewUrl: booking.previewUrl || booking.preview_url || "",
+    productionStage:
+      booking.productionStage || booking.production_stage || "queued",
+    estimatedFinish: booking.estimatedFinish || booking.estimated_finish || "",
+  };
+}
+
+function readPersistedBookings() {
+  try {
+    const candidates = [
+      localStorage.getItem("inheartz_store_v5_bookings"),
+      localStorage.getItem("inheartz_store_bookings"),
+    ];
+
+    for (const raw of candidates) {
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(normalizeBookingRecord);
+      }
+    }
+  } catch {
+    // Ignore malformed local data and fall back to the store snapshot.
+  }
+
+  return store.bookings.all().map(normalizeBookingRecord);
+}
+
 function countByStatus(bookings) {
   return bookings.reduce((acc, booking) => {
     const status = booking.status || "pending";
@@ -20,13 +110,17 @@ function countByStatus(bookings) {
 
 export const adminService = {
   async stats() {
+    const cached = readCache("stats");
+    if (cached) return cached;
+
     try {
       const data = await http.get(ENDPOINTS.admin.stats);
-      if (data) return data.data || data;
+      const normalized = data?.data || data;
+      if (normalized) return writeCache("stats", normalized);
     } catch (error) {
       void error;
     }
-    const bookings = store.bookings.all();
+    const bookings = readPersistedBookings();
     const totalRevenue = bookings
       .filter((booking) => REVENUE_STATUSES.includes(booking.status))
       .reduce((sum, booking) => sum + toNumber(booking.amount), 0);
@@ -36,7 +130,7 @@ export const adminService = {
     const completed = bookings.filter(
       (booking) => booking.status === "completed"
     );
-    return {
+    const localStats = {
       totalBookings: bookings.length,
       pendingBookings: bookings.filter((booking) =>
         ["pending", "awaiting_payment"].includes(booking.status)
@@ -49,23 +143,28 @@ export const adminService = {
         0
       ),
     };
+    return writeCache("stats", localStats);
   },
 
   async finance() {
+    const cached = readCache("finance");
+    if (cached) return cached;
+
     try {
       const data = await http.get(ENDPOINTS.admin.finance);
-      if (data) return data.data || data;
+      const normalized = data?.data || data;
+      if (normalized) return writeCache("finance", normalized);
     } catch (error) {
       void error;
     }
-    const completed = store.bookings
-      .all()
-      .filter((booking) => booking.status === "completed");
+    const completed = readPersistedBookings().filter(
+      (booking) => booking.status === "completed"
+    );
     const income = completed.reduce(
       (sum, booking) => sum + toNumber(booking.amount),
       0
     );
-    return {
+    const localFinance = {
       balance: income,
       income,
       expense: 0,
@@ -78,17 +177,26 @@ export const adminService = {
         occurredAt: booking.createdAt,
       })),
     };
+    return writeCache("finance", localFinance);
   },
 
   async bookings() {
+    const cached = readCache("bookings");
+    if (cached) return cached;
+
     try {
       const data = await http.get(ENDPOINTS.admin.bookings);
-      const list = Array.isArray(data) ? data : data.data;
-      if (Array.isArray(list)) return list;
+      const list = Array.isArray(data) ? data : data?.data;
+      if (Array.isArray(list)) {
+        const normalized = list.map(normalizeBookingRecord);
+        return writeCache("bookings", normalized);
+      }
     } catch (error) {
       void error;
     }
-    return store.bookings.all();
+
+    const fallback = readPersistedBookings();
+    return writeCache("bookings", fallback.length ? fallback : []);
   },
 
   async users() {
@@ -171,18 +279,41 @@ export const adminService = {
   },
 
   async revenue() {
+    const cached = readCache("revenue");
+    if (cached) return cached;
+
     try {
       const data = await http.get(ENDPOINTS.admin.revenue);
-      const list = Array.isArray(data) ? data : data.data;
-      if (Array.isArray(list)) return list;
+      const list = Array.isArray(data) ? data : data?.data;
+      if (Array.isArray(list)) return writeCache("revenue", list);
     } catch (error) {
       void error;
     }
-    return mockMonitoring.revenue;
+    const localRevenue = mockMonitoring.revenue;
+    return writeCache("revenue", localRevenue);
   },
 
   async statusBreakdown() {
     return countByStatus(store.bookings.all());
+  },
+
+  async createBooking(payload) {
+    let result = null;
+    try {
+      const data = await http.post(ENDPOINTS.admin.bookings, payload);
+      result = data.data || data;
+    } catch (error) {
+      void error;
+    }
+    const stored = store.bookings.create({
+      ...payload,
+      id: result?.id,
+      status: result?.status || payload.status || "awaiting_payment",
+    });
+    const merged = result || stored;
+    const cachedBookings = readPersistedBookings();
+    writeCache("bookings", cachedBookings.length ? cachedBookings : [merged]);
+    return merged;
   },
 
   async updateBookingStatus(id, status) {
@@ -198,6 +329,8 @@ export const adminService = {
       void error;
     }
     const local = store.bookings.update(id, patch);
+    const cachedBookings = readPersistedBookings();
+    writeCache("bookings", cachedBookings.length ? cachedBookings : [local]);
     return result || local;
   },
 

@@ -2,8 +2,24 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import packageService from "../services/packageService";
 import Reveal from "../components/Reveal";
-import { packages as mockPackages } from "../data/mock";
-import { formatIDR } from "../utils/format";
+import { packages as mockPackages, packageSegments } from "../data/mock";
+import {
+  formatIDR,
+  BOOKING_CATEGORIES,
+  bookingCategoryLabel,
+} from "../utils/format";
+
+function segmentsOf(item) {
+  if (!item) return [];
+  return Array.isArray(item.segments)
+    ? item.segments
+    : packageSegments[item.slug] || [];
+}
+
+function matchesCategory(item, category) {
+  const segments = segmentsOf(item);
+  return segments.length === 0 || segments.includes(category);
+}
 
 const faqs = [
   {
@@ -26,6 +42,7 @@ const faqs = [
 
 export default function Services() {
   const [packages, setPackages] = useState(mockPackages);
+  const [category, setCategory] = useState("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,6 +54,11 @@ export default function Services() {
       active = false;
     };
   }, []);
+
+  const filteredPackages =
+    category === "all"
+      ? packages
+      : packages.filter((item) => matchesCategory(item, category));
 
   return (
     <div className="w-full bg-white text-gray-900">
@@ -57,7 +79,7 @@ export default function Services() {
       </section>
 
       <section className="container-editorial py-14 md:py-20">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-8">
           <p className="eyebrow mb-3">Informasi Paket</p>
           <h2 className="section-title">Layanan Media Kreatif</h2>
           <p className="mt-4 text-sm md:text-base text-gray-500 leading-relaxed">
@@ -67,8 +89,33 @@ export default function Services() {
           </p>
         </div>
 
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-y border-gray-200 py-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
+            {filteredPackages.length} paket
+            {category !== "all" && ` · ${bookingCategoryLabel(category)}`}
+          </p>
+          <label className="flex items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+              Harga &amp; Paket
+            </span>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="input w-auto"
+              aria-label="Filter kategori paket"
+            >
+              <option value="all">Semua Kategori</option>
+              {BOOKING_CATEGORIES.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <Reveal className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {packages.map((item) => (
+          {filteredPackages.map((item) => (
             <article
               key={item.id}
               id={item.slug}
@@ -134,6 +181,11 @@ export default function Services() {
               </button>
             </article>
           ))}
+          {filteredPackages.length === 0 && (
+            <p className="col-span-full py-12 text-center text-sm text-gray-400">
+              Belum ada paket pada kategori ini.
+            </p>
+          )}
         </Reveal>
       </section>
 

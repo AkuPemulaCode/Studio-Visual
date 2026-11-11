@@ -1,10 +1,29 @@
 # Diagram Sistem - Inheartz Studio
 
-Dokumen ini menampilkan seluruh diagram sistem dalam format **Mermaid** (langsung dirender di GitHub, GitLab, VS Code, dan banyak viewer Markdown).
+Dokumen ini menampilkan seluruh diagram sistem dalam format **Mermaid** agar mudah dibaca, dipresentasikan, dan dirender di GitHub, GitLab, VS Code, dan viewer Markdown lain.
 
-> Sumber asli juga tersedia: PlantUML (`.puml`) untuk UML & HIPO dan DBML (`.dbml`) untuk ERD. Lihat tabel [Berkas Sumber](#berkas-sumber) di bawah.
+> Sumber asli juga tersedia: PlantUML (`.puml`) untuk UML & HIPO, serta DBML (`.dbml`) untuk ERD. Lihat tabel [Berkas Sumber](#berkas-sumber) di bawah.
 >
-> **Versi Dokumen: 0.1.8**
+> **Versi Dokumen: 0.2.0**
+>
+> **Catatan:** Diagram ini disusun untuk tampilan yang lebih rapi dan mudah dicerna saat dipakai untuk review produk, demo, atau laporan tugas.
+
+## Overview Arsitektur
+
+```mermaid
+flowchart LR
+    Guest[Guest / Calon Pelanggan] --> Web[Website Inheartz]
+    Web --> Booking[Booking & Jadwal]
+    Booking --> Midtrans[Midtrans Snap]
+    Midtrans --> Payment[Status Pembayaran]
+    Payment --> Pesanan[Pesanan & Progress]
+    Web --> Admin[Admin Dashboard]
+    Web --> Staff[Staff / Produksi]
+    Admin --> Mgmt[Booking, User, Paket, Portofolio]
+    Staff --> Kanban[Kanban Produksi]
+    Mgmt --> Notif[Notifikasi Web + WhatsApp]
+    Kanban --> Notif
+```
 
 Daftar isi:
 1. [Use Case Diagram](#1-use-case-diagram)
@@ -37,7 +56,7 @@ flowchart LR
         uc02(["Lihat paket & FAQ"])
         uc03(["Lihat portofolio<br/>(filter kategori/tanggal & detail)"])
         uc04(["Lihat ketersediaan jadwal"])
-        uc05(["Buat booking 4 langkah"])
+        uc05(["Buat booking 5 langkah<br/>(kategori → paket → jadwal → data → konfirmasi)"])
         uc06(["Bayar via Midtrans Snap"])
         uc07(["Lihat tagihan belum dibayar"])
         uc08(["Batalkan pembayaran"])
@@ -50,7 +69,7 @@ flowchart LR
         uc15(["Setujui hasil / minta revisi"])
         uc16(["Terima notifikasi in-app"])
         uc17(["Monitoring & statistik"])
-        uc18(["Kelola booking<br/>(status, catatan, link Drive, preview, hapus)"])
+        uc18(["Kelola booking<br/>(status, kategori, catatan, link Drive, preview, hapus)"])
         uc19(["Kelola papan produksi (kanban)"])
         uc20(["Kelola paket layanan"])
         uc21(["Kelola portofolio"])
@@ -155,7 +174,7 @@ flowchart TD
     loggedIn -- tidak --> auth["Daftar / Masuk / Lupa Password<br/>OTP WhatsApp via Fonnte"]
     auth --> authDone["Backend: autentikasi + OTP<br/>redirect sesuai peran"]
     loggedIn -- ya --> token["Sistem: validasi token Sanctum"]
-    authDone --> book["/booking<br/>pilih paket, tanggal & jam"]
+    authDone --> book["/booking<br/>pilih kategori, paket, tanggal & jam"]
     token --> book
     book --> avail{"Slot tersedia?"}
     avail -- tidak --> full["Tampilkan 'slot penuh'"] --> stop0
@@ -193,7 +212,7 @@ flowchart TD
     redirect --> dash["Buka dashboard monitoring<br/>statistik, revenue, saldo & kas"]
     dash --> notify["Terima notifikasi pesanan baru<br/>(bell/toast + WhatsApp)"]
     notify --> bookingQ{"Kelola booking?"}
-    bookingQ -- ya --> bookings["/admin/bookings<br/>filter/cari, ubah status, catatan,<br/>link Drive, preview, hapus"]
+    bookingQ -- ya --> bookings["/admin/bookings<br/>filter/cari, ubah status, kategori, catatan,<br/>link Drive, preview, hapus"]
     bookings --> save["Backend: simpan perubahan<br/>catat audit log + notif status<br/>ke client (web + WhatsApp)"]
     save --> verify["Admin: verifikasi / cek pembayaran Midtrans"]
     verify --> prodQ{"Kelola produksi?"}
@@ -272,7 +291,7 @@ flowchart TD
     browse --> booking{"Ingin memesan sesi?"}
     orders --> booking
     booking -- tidak --> stopB((Selesai))
-    booking -- ya --> book["Booking 4 langkah:<br/>paket → jadwal → data → konfirmasi"]
+    booking -- ya --> book["Booking 5 langkah:<br/>kategori → paket → jadwal → data → konfirmasi"]
     book --> avail{"Slot tersedia?"}
     avail -- tidak --> full["Tampilkan 'slot penuh'"] --> stopB
     avail -- ya --> create["Backend: buat booking awaiting_payment<br/>kuota slot dikurangi"]
@@ -373,6 +392,7 @@ classDiagram
         +string customer_name
         +string customer_email
         +string customer_phone
+        +enum booking_category
         +string location
         +text notes
         +date booking_date
@@ -600,6 +620,7 @@ erDiagram
         string customer_name
         string customer_email
         string customer_phone
+        enum booking_category
         string location
         text notes
         text admin_note
@@ -718,7 +739,7 @@ erDiagram
     }
 ```
 
-> Catatan: kolom `PACKAGES.is_popular` tetap ada untuk kompatibilitas backend, tetapi sejak versi 0.1.7 tidak lagi digunakan/ditampilkan di UI. Rekomendasi paket (`GET /recommendations`) bersifat turunan dan tidak memerlukan tabel baru. Notifikasi WhatsApp dikirim via Fonnte tanpa tabel terpisah.
+> Catatan: kolom `PACKAGES.is_popular` tetap ada untuk kompatibilitas backend, tetapi sejak versi 0.1.7 tidak lagi digunakan/ditampilkan di UI. Kolom `BOOKINGS.booking_category` (`personal` | `event` | `corporate_umkm`, default `personal`) membagi pesanan menjadi Personal, Event, serta Corporate & UMKM; pelanggan memilihnya di langkah pertama booking dan admin dapat mengubahnya. Rekomendasi paket (`GET /recommendations`) bersifat turunan dan tidak memerlukan tabel baru. Notifikasi WhatsApp dikirim via Fonnte tanpa tabel terpisah.
 
 ---
 
@@ -785,7 +806,7 @@ flowchart TD
 
     home --> menu{"Pilih menu utama?"}
 
-    menu -->|Booking| book["/booking<br/>paket → jadwal → data → konfirmasi"]
+    menu -->|Booking| book["/booking<br/>kategori → paket → jadwal → data → konfirmasi"]
     book --> create["Buat booking awaiting_payment<br/>kuota dikurangi + notif pesanan baru<br/>ke admin/staff (web + WhatsApp)"]
     create --> pay["/pembayaran?booking=KODE"]
     pay --> cancel{"Batalkan pembayaran?"}
@@ -873,11 +894,12 @@ flowchart TD
     M2 --> M2d["2.4 Profil & Logout"]
     M2 --> M2e["2.5 RBAC & Proteksi Rute"]
 
-    M3 --> M3a["3.1 Pilih Paket"]
-    M3 --> M3b["3.2 Kalender & Slot Jam"]
-    M3 --> M3c["3.3 Data Pemesan"]
-    M3 --> M3d["3.4 Konfirmasi & Buat Booking"]
-    M3 --> M3e["3.5 Batalkan Booking"]
+    M3 --> M3a["3.1 Pilih Kategori Booking"]
+    M3 --> M3b["3.2 Pilih Paket"]
+    M3 --> M3c["3.3 Kalender & Slot Jam"]
+    M3 --> M3d["3.4 Data Pemesan"]
+    M3 --> M3e["3.5 Konfirmasi & Buat Booking"]
+    M3 --> M3f["3.6 Batalkan Booking"]
 
     M4 --> M4a["4.1 Tagihan Menunggu Pembayaran"]
     M4 --> M4b["4.2 Midtrans Snap"]
@@ -939,7 +961,7 @@ flowchart TB
 
     subgraph M3["3. Modul Booking"]
         direction LR
-        I3["INPUT<br/>Paket, tanggal, jam<br/>Data pemesan<br/>Kuota slot"] --> P3["PROCESS<br/>Validasi kuota<br/>Buat booking awaiting_payment<br/>Kurangi kuota slot"] --> O3["OUTPUT<br/>Kode booking<br/>Status awaiting_payment<br/>Tagihan pembayaran<br/>Notif pesanan baru"]
+        I3["INPUT<br/>Kategori booking<br/>Paket, tanggal, jam<br/>Data pemesan<br/>Kuota slot"] --> P3["PROCESS<br/>Validasi kategori & kuota<br/>Buat booking awaiting_payment<br/>Kurangi kuota slot"] --> O3["OUTPUT<br/>Kode booking + kategori<br/>Status awaiting_payment<br/>Tagihan pembayaran<br/>Notif pesanan baru"]
     end
 
     subgraph M4["4. Modul Pembayaran & Kas"]

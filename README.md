@@ -2,7 +2,7 @@
 
 Frontend studio media kreatif & fotografi dibangun dengan React 19, Vite, Tailwind CSS v4, dan React Router v7. Struktur kode sudah dipisahkan per layer agar mudah disambungkan ke backend Laravel.
 
-> **Versi Dokumen: 0.1.8**
+> **Versi Dokumen: 0.2.0**
 
 ## Scripts
 
@@ -97,7 +97,7 @@ Authorization: Bearer <token>
 
 ## Fitur
 
-- Booking bertahap 4 langkah dengan kalender penjadwalan dan pemilihan jam.
+- Booking bertahap 5 langkah (kategori, paket, jadwal, data, konfirmasi) dengan kalender penjadwalan dan pemilihan jam.
 - Halaman informasi paket layanan beserta FAQ.
 - Halaman pembayaran dengan pilihan metode dan unggah bukti.
 - Halaman **Progress Pesanan** (`/pesanan`) untuk client memantau tahapan pesanan.

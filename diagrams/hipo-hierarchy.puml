@@ -1,7 +1,7 @@
 @startwbs HIPO-Hierarchy-Inheartz
 ' HIPO - Hierarchy Chart (H Chart) - Inheartz Studio
 ' Menampilkan dekomposisi modul sistem secara hierarkis (top-down).
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam shadowing false
 skinparam defaultTextAlignment left
@@ -19,11 +19,12 @@ skinparam defaultTextAlignment left
 *** 2.4 Profil & Logout
 *** 2.5 RBAC & Proteksi Rute
 ** 3. Modul Booking
-*** 3.1 Pilih Paket
-*** 3.2 Kalender & Slot Jam
-*** 3.3 Data Pemesan
-*** 3.4 Konfirmasi & Buat Booking
-*** 3.5 Batalkan Booking
+*** 3.1 Pilih Kategori Booking (Personal / Event / Corporate & UMKM)
+*** 3.2 Pilih Paket
+*** 3.3 Kalender & Slot Jam
+*** 3.4 Data Pemesan
+*** 3.5 Konfirmasi & Buat Booking
+*** 3.6 Batalkan Booking
 ** 4. Modul Pembayaran & Kas
 *** 4.1 Tagihan Menunggu Pembayaran
 *** 4.2 Midtrans Snap

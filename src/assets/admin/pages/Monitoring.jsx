@@ -12,6 +12,8 @@ import {
   formatShortDate,
   statusLabel,
   statusStyle,
+  bookingCategoryLabel,
+  bookingCategoryStyle,
 } from "../../utils/format";
 
 export default function Monitoring() {
@@ -199,6 +201,7 @@ export default function Monitoring() {
               <tr>
                 <th className="px-6 py-4 font-bold">ID</th>
                 <th className="px-6 py-4 font-bold">Pelanggan</th>
+                <th className="px-6 py-4 font-bold">Kategori</th>
                 <th className="px-6 py-4 font-bold">Paket</th>
                 <th className="px-6 py-4 font-bold">Tanggal</th>
                 <th className="px-6 py-4 font-bold">Status</th>
@@ -213,6 +216,17 @@ export default function Monitoring() {
                   </td>
                   <td className="px-6 py-4 font-bold text-gray-900">
                     {booking.customer}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`badge ${bookingCategoryStyle(
+                        booking.bookingCategory || booking.booking_category
+                      )}`}
+                    >
+                      {bookingCategoryLabel(
+                        booking.bookingCategory || booking.booking_category
+                      )}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-gray-600">{booking.package}</td>
                   <td className="px-6 py-4 text-gray-600">

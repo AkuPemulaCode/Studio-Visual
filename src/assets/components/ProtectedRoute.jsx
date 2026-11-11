@@ -20,7 +20,7 @@ export default function ProtectedRoute({
     return <Navigate to={home} replace />;
   }
 
-  if (requireStaff && !isAdmin && !isWorker) {
+  if (requireStaff && !isWorker) {
     return <Navigate to={home} replace />;
   }
 

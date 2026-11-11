@@ -136,3 +136,54 @@ export const ROLE_LABELS = {
   production: 'Produksi',
   client: 'Client',
 };
+
+export const BOOKING_CATEGORIES = [
+  {
+    key: "umkm",
+    label: "UMKM",
+    description:
+      "Kebutuhan usaha mikro & kecil: foto produk, konten media sosial, dan desain brand Anda.",
+  },
+  {
+    key: "corporate",
+    label: "Corporate",
+    description:
+      "Kebutuhan perusahaan: annual report, profil bisnis, dokumen acara, dan branding korporat.",
+  },
+  {
+    key: "personal",
+    label: "Personal",
+    description:
+      "Sesi foto personal, portrait, pre-wedding, dan kebutuhan individu lainnya.",
+  },
+  {
+    key: "event",
+    label: "Event",
+    description:
+      "Dokumentasi acara, seminar, launching produk, dan gathering.",
+  },
+];
+
+export const BOOKING_CATEGORY_LABELS = {
+  personal: "Personal",
+  event: "Event",
+  corporate: "Corporate",
+  umkm: "UMKM",
+  corporate_umkm: "Corporate",
+};
+
+export const BOOKING_CATEGORY_STYLES = {
+  personal: "bg-emerald-100 text-emerald-800",
+  event: "bg-indigo-100 text-indigo-800",
+  corporate: "bg-amber-100 text-amber-800",
+  umkm: "bg-orange-100 text-orange-800",
+  corporate_umkm: "bg-amber-100 text-amber-800",
+};
+
+export function bookingCategoryLabel(key) {
+  return BOOKING_CATEGORY_LABELS[key] || key || "-";
+}
+
+export function bookingCategoryStyle(key) {
+  return BOOKING_CATEGORY_STYLES[key] || "bg-gray-100 text-gray-700";
+}

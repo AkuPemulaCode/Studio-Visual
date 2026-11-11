@@ -2,7 +2,7 @@
 ' Activity Diagram - Guest / Client
 ' Alur: jelajah publik -> autentikasi/OTP -> booking -> Midtrans -> pesanan/review
 '       -> notifikasi web + WhatsApp -> rekomendasi paket (v0.1.8)
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam shadowing false
 skinparam conditionStyle diamond
@@ -60,6 +60,7 @@ endif
 
 |Guest / Client|
 :Buka /booking;
+:Pilih kategori booking\n(Personal / Event / Corporate & UMKM);
 :Pilih paket;
 :Pilih tanggal & jam;
 |Sistem (React SPA)|

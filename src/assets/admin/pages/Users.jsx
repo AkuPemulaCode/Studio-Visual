@@ -15,7 +15,8 @@ const EMPTY_FORM = {
 };
 
 const ROLE_OPTIONS = [
-  { value: "production", label: "Pekerja Produksi" },
+  { value: "staff", label: "Staff" },
+  { value: "production", label: "Produksi" },
   { value: "admin", label: "Admin" },
   { value: "client", label: "Client" },
 ];
@@ -314,8 +315,8 @@ export default function Users() {
               ))}
             </select>
             <p className="mt-2 text-xs text-gray-400 leading-relaxed">
-              Pekerja produksi hanya bisa masuk ke dashboard produksi untuk
-              memperbarui tahapan pengerjaan pesanan.
+              Staff dan pekerja produksi hanya bisa masuk ke dashboard
+              produksi untuk memperbarui tahapan pengerjaan pesanan.
             </p>
           </div>
           <div>

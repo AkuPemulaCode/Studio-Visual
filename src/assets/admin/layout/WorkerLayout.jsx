@@ -48,6 +48,16 @@ export default function WorkerLayout() {
         <nav className="flex-1 overflow-y-auto py-4">
           <NavLink to="/worker" end onClick={() => setOpen(false)} className={navClass}>
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 13h6V4H4v9zm10 7h6V11h-6v9zM4 20h6v-4H4v4zm10-11h6V4h-6v5z" />
+            </svg>
+            Monitoring
+          </NavLink>
+          <NavLink
+            to="/worker/production"
+            onClick={() => setOpen(false)}
+            className={navClass}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 5h6a2 2 0 012 2v3m0 4v3a2 2 0 01-2 2h-3m-4 0H7a2 2 0 01-2-2v-3m0-4V7a2 2 0 012-2h3M3 12h18" />
             </svg>
             Produksi
@@ -61,6 +71,16 @@ export default function WorkerLayout() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm0-8h14" />
             </svg>
             Booking
+          </NavLink>
+          <NavLink
+            to="/worker/booking-baru"
+            onClick={() => setOpen(false)}
+            className={navClass}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Tambah Booking
           </NavLink>
           <NavLink
             to="/worker/customers"
@@ -111,7 +131,7 @@ export default function WorkerLayout() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span className="eyebrow">Dashboard Produksi</span>
+            <span className="eyebrow">Dashboard Staff</span>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />

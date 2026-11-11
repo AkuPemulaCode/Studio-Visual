@@ -3,7 +3,7 @@
 ' Mencakup: akses publik, autentikasi/OTP, booking, pembayaran Midtrans,
 ' produksi (admin/worker), review/revisi client, notifikasi web + WhatsApp,
 ' rekomendasi paket, dan gagal database.
-' Versi Dokumen: 0.1.8
+' Versi Dokumen: 0.2.0
 ' Render: https://www.plantuml.com/plantuml/uml  (paste)
 skinparam shadowing false
 skinparam conditionStyle diamond
@@ -38,7 +38,7 @@ if (Sudah login?) then (ya)
   if (Peran = admin?) then (ya)
     |Admin|
     :Buka /admin (Monitoring, Booking, Produksi,\nPelanggan, User, Paket, Portofolio, Audit Log);
-    :Kelola booking, status pembayaran, dan papan produksi;
+    :Kelola booking (status, kategori, pembayaran)\ndan papan produksi;
     :Kelola paket, portofolio, user & role;
     :Lihat saldo, kas studio, dan audit log;
     :Terima notifikasi pesanan baru (web + WhatsApp);
@@ -109,6 +109,7 @@ endif
 |Guest / Client|
 if (Ingin memesan sesi?) then (ya)
   :Buka /booking;
+  :Pilih kategori booking\n(Personal / Event / Corporate & UMKM);
   :Pilih paket;
   :Pilih tanggal & jam;
   |Sistem (React SPA)|

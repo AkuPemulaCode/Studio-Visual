@@ -26,6 +26,7 @@ import NotFound from "./assets/pages/NotFound";
 import Monitoring from "./assets/admin/pages/Monitoring";
 import Production from "./assets/admin/pages/Production";
 import AdminBookings from "./assets/admin/pages/Bookings";
+import BookingCreate from "./assets/admin/pages/BookingCreate";
 import AdminCustomers from "./assets/admin/pages/Customers";
 import AdminUsers from "./assets/admin/pages/Users";
 import AdminPackages from "./assets/admin/pages/Packages";
@@ -66,6 +67,7 @@ export default function App() {
                 <Route index element={<Monitoring />} />
                 <Route path="production" element={<Production />} />
                 <Route path="bookings" element={<AdminBookings />} />
+                <Route path="bookings/baru" element={<BookingCreate />} />
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="packages" element={<AdminPackages />} />
@@ -82,8 +84,14 @@ export default function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Production />} />
+                <Route index element={<Monitoring />} />
+                <Route path="monitoring" element={<Monitoring />} />
+                <Route path="production" element={<Production />} />
                 <Route path="bookings" element={<AdminBookings worker />} />
+                <Route
+                  path="booking-baru"
+                  element={<BookingCreate worker />}
+                />
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="*" element={<Navigate to="/worker" replace />} />
               </Route>

@@ -3,7 +3,7 @@
 Product Requirements Document untuk website & dashboard Inheartz Studio, studio media kreatif dan fotografi.
 
 > Status: **Fase 2 selesai** — backend Laravel sudah terintegrasi (auth Sanctum, booking, pembayaran Midtrans Snap, verifikasi OTP WhatsApp untuk pendaftaran & reset password, dashboard admin).
-> **Versi Dokumen: 0.1.8** — lihat [Changelog](#16-changelog).
+> **Versi Dokumen: 0.2.0** — lihat [Changelog](#16-changelog).
 > Dokumen terkait: [eerd.md](./eerd.md) untuk model data, [README.md](./README.md) untuk titik integrasi, dan folder [diagrams/](./diagrams) untuk UML/ERD.
 
 ## 1. Ringkasan Produk
@@ -44,7 +44,7 @@ Inheartz Studio adalah platform digital yang menampilkan layanan media kreatif s
 
 ### In Scope
 - Landing page, layanan/paket, portofolio, kategori.
-- Booking 4 langkah dengan kalender & slot jam.
+- Booking 5 langkah (kategori, paket, jadwal, data, konfirmasi) dengan kalender & slot jam.
 - **Pembayaran online via Midtrans Snap** (transfer bank, VA, e-wallet, QRIS, kartu).
 - **Rekonsiliasi status pembayaran** (tarik status langsung dari Midtrans) + webhook.
 - **Ledger saldo studio** (kas masuk dari booking selesai, koreksi refund/chargeback).
@@ -118,13 +118,14 @@ Prioritas: **P0** wajib, **P1** penting, **P2** opsional. Status: ✅ selesai.
 - **FR-22 (P1)** ✅ Modal detail karya.
 
 ### 7.4 Booking & Penjadwalan
-- **FR-30 (P0)** ✅ Alur 4 langkah: pilih paket, jadwal, data pemesan, konfirmasi.
+- **FR-30 (P0)** ✅ Alur 5 langkah: pilih kategori (Personal / Event / Corporate & UMKM), paket, jadwal, data pemesan, konfirmasi.
 - **FR-31 (P0)** ✅ Kalender untuk memilih tanggal (tanggal lampau disabled).
 - **FR-32 (P0)** ✅ Slot jam tersedia sesuai tanggal (endpoint `/availability`).
 - **FR-33 (P0)** ✅ Form data pemesan dengan validasi (nama, email, telepon wajib).
 - **FR-34 (P0)** ✅ Ringkasan booking sticky dan tombol konfirmasi menuju pembayaran.
 - **FR-35 (P1)** ✅ Data pemesan terisi otomatis bila sudah login.
 - **FR-36 (P1)** ✅ Mengurangi kuota slot saat booking berhasil.
+- **FR-37 (P0)** ✅ Kategori booking tersimpan pada pesanan (`booking_category`: `personal | event | corporate_umkm`) dan ditampilkan di ringkasan booking, konfirmasi, serta dashboard admin.
 
 ### 7.5 Pembayaran (Midtrans)
 - **FR-40 (P0)** ✅ Menampilkan rincian booking dan total (diambil dari booking terkait, fallback ke draft).
@@ -162,6 +163,7 @@ Prioritas: **P0** wajib, **P1** penting, **P2** opsional. Status: ✅ selesai.
 - **FR-68 (P1)** ✅ Log aktivitas (audit trail) tercatat di backend.
 - **FR-69 (P0)** ✅ **CRUD user & role**: tambah/edit/hapus akun (admin, produksi, client) dengan validasi; tidak bisa menghapus/menurunkan peran akun sendiri dan selalu menyisakan minimal satu admin.
 - **FR-70 (P0)** ✅ **Sinkronisasi status lintas dashboard**: perubahan status booking oleh pekerja produksi langsung tersimpan dan tercermin di dashboard admin (sumber data sama + polling 15–20 detik pada Monitoring, Booking, dan Pelanggan).
+- **FR-71 (P0)** ✅ **Ubah kategori booking oleh admin**: pada modal kelola booking admin dapat memindahkan pesanan ke Personal, Event, atau Corporate & UMKM; perubahan tersimpan dan tercermin di tabel booking.
 
 ### 7.8 Penanganan Offline
 - **FR-80 (P0)** ✅ Deteksi status online/offline perangkat.
@@ -212,8 +214,8 @@ Prioritas: **P0** wajib, **P1** penting, **P2** opsional. Status: ✅ selesai.
 ## 8. Alur Pengguna
 
 **Booking -> Pembayaran -> Konfirmasi**
-1. Pengguna memilih paket di `/layanan` atau langsung ke `/booking`.
-2. Mengisi langkah booking (paket, jadwal, data, konfirmasi) → booking `awaiting_payment`.
+1. Pengguna memilih kategori di `/booking` (atau langsung dari paket di `/layanan` yang otomatis mengisi kategori).
+2. Mengisi langkah booking (kategori, paket, jadwal, data, konfirmasi) → booking `awaiting_payment`.
 3. Diarahkan ke `/pembayaran?booking=<kode>` lalu klik **Bayar Sekarang**.
 4. Sistem membuat transaksi Snap; pengguna membayar di jendela Midtrans (atau redirect).
 5. FE memanggil `POST /payments/midtrans/sync` → status ditarik dari Midtrans → booking menjadi `paid`.
@@ -343,6 +345,11 @@ Catatan penting:
 | Notifikasi tidak terdengar | Toast + badge tetap tampil walau audio diblokir browser (butuh gesture pertama) |
 
 ## 16. Changelog
+
+### 0.2.0
+- **Kategori booking**: pesanan dibagi menjadi **Personal**, **Event**, serta **Corporate & UMKM** (`booking_category`). Pelanggan memilih kategori pada langkah pertama wizard booking (kategori → paket → jadwal → data → konfirmasi), lalu paket yang tampil difilter sesuai kategori.
+- **Admin dapat mengubah kategori booking** melalui modal kelola booking; kategori tampil sebagai badge di tabel booking dan pada detail pesanan.
+- Sinkronisasi PRD, ERD/EERD, use case, class, activity, flowchart, HIPO, dan `diagrams/DIAGRAM.md` dengan alur booking 5 langkah.
 
 ### 0.1.8
 - **Notifikasi pesanan baru via web + WhatsApp**: admin dan staff produksi menerima notifikasi bell/toast; pesan WhatsApp dikirim ke nomor pada profil masing-masing (tautan berbeda untuk admin & pekerja produksi).
